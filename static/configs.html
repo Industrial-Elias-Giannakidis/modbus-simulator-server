@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modbus Config Editor</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      padding: 0 24px 24px;
+    }
+
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background: #0f1117;
+      z-index: 50;
+      padding-top: 24px;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    nav a {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      background: #161b22;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    nav a:hover { color: #e6edf3; border-color: #58a6ff; }
+    nav a.active { color: #e6edf3; border-color: #58a6ff; background: #1c2744; }
+
+    /* ── Live toggle switch ── */
+    .live-switch { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-left:auto; }
+    .live-track { position:relative; width:40px; height:22px; background:#30363d; border-radius:11px; border:1px solid #30363d; transition:background .2s,border-color .2s; flex-shrink:0; }
+    .live-knob { position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#8b949e; transition:transform .2s,background .2s; }
+    .live-switch.on .live-track { background:#1f3d2a; border-color:#56d364; }
+    .live-switch.on .live-knob { transform:translateX(18px); background:#56d364; }
+    .live-switch .live-label { font-size:0.83rem; font-weight:500; color:#8b949e; min-width:38px; }
+    .live-switch.on .live-label { color:#56d364; }
+
+    /* ── Restart button ── */
+    .restart-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      background: #161b22;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .restart-btn:hover { color: #e6edf3; border-color: #f85149; }
+    .restart-btn:active { background: #2a1a1a; }
+
+    /* ── Byte order bar ── */
+    .byte-order-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 8px 14px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .byte-order-bar .bo-label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .byte-order-bar label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.83rem;
+      color: #c9d1d9;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #bo-status { font-size: 0.75rem; color: #56d364; margin-left: auto; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: 1.4rem; font-weight: 600; color: #e6edf3; }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .header-actions button svg { display: inline-block; vertical-align: middle; margin-right: 5px; flex-shrink: 0; }
+    .header-actions button span { vertical-align: middle; }
+
+    button {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #c9d1d9;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    button:hover { background: #1c2128; color: #e6edf3; border-color: #58a6ff; }
+    button:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+    button.primary {
+      background: #1f4b8e;
+      border-color: #388bfd;
+      color: #e6edf3;
+    }
+    button.primary:hover { background: #2a5fa5; }
+
+    button.danger {
+      background: #3d1a1a;
+      border-color: #f85149;
+      color: #f85149;
+    }
+    button.danger:hover { background: #5a2020; }
+
+    #save-status {
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+    #save-status.dirty { color: #e3b341; }
+    #save-status.saved { color: #56d364; }
+    #save-status.error { color: #f85149; }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filters input {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+      min-width: 240px;
+    }
+    .filters input:focus { border-color: #58a6ff; }
+
+    .note {
+      font-size: 0.78rem;
+      color: #8b949e;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+    }
+    .note strong { color: #e3b341; }
+
+    /* ── Panels ── */
+    .panels {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #30363d;
+    }
+    .panel-header.input-register   { background:#1a2d47; color:#79c0ff; }
+    .panel-header.holding-register { background:#261a47; color:#bc8cff; }
+    .panel-header.coil             { background:#1a3024; color:#56d364; }
+    .panel-header.discrete-input   { background:#3a2318; color:#ffa657; }
+
+    .panel-add-btn {
+      padding: 2px 10px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid currentColor;
+      background: transparent;
+      color: inherit;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .panel-add-btn:hover { opacity: 1; background: rgba(255,255,255,0.06); }
+
+    .panel-body { display: flex; flex-direction: column; }
+
+    .panel-empty {
+      padding: 20px;
+      text-align: center;
+      color: #484f58;
+      font-size: 0.83rem;
+    }
+
+    /* ── Register card ── */
+    .reg-card {
+      border-bottom: 1px solid #21262d;
+      padding: 10px 12px;
+      transition: background 0.1s;
+    }
+    .reg-card:last-child { border-bottom: none; }
+    .reg-card:hover { background: #0d1117; }
+    .reg-card.modified { background: #1c1f0d; }
+    .reg-card.modified:hover { background: #252a10; }
+
+    /* Main row: name, offset, address, type, delete */
+    .card-main {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+.card-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .card-field.f-wide    { flex: 2 1 120px; }
+    .card-field.f-medium  { flex: 1 1 80px; }
+    .card-field.f-narrow  { flex: 0 0 64px; }
+    .card-field.f-grow    { flex: 1 1 100px; }
+
+    .card-field label {
+      font-size: 0.68rem;
+      color: #484f58;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .card-field input,
+    .card-field select {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #21262d;
+      color: #c9d1d9;
+      padding: 4px 7px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .card-field input:focus,
+    .card-field select:focus { border-color: #58a6ff; background: #161b22; }
+
+    .card-field input::placeholder { color: #484f58; }
+
+.card-delete-btn {
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      align-self: flex-end;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: stretch;
+    gap: 32px;
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, transparent, #58a6ff55, transparent) 1;
+    background: #0d1117;
+    border-radius: 8px;
+  }
+  .footer-logo {
+    align-self: stretch;
+    display: flex;
+    align-items: stretch;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .footer-logo img {
+    width: auto;
+    height: 200px;
+    min-height: 0;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow:
+      0 0 18px rgba(0,210,180,0.2),
+      0 4px 12px rgba(0,0,0,0.6);
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.35s ease;
+    display: block;
+    cursor: pointer;
+  }
+  .footer-logo img:hover {
+    transform: scale(1.1);
+    box-shadow:
+      0 0 0 2px rgba(0,210,180,0.5),
+      0 0 24px 4px rgba(0,210,180,0.55),
+      0 0 60px 8px rgba(0,210,180,0.2),
+      0 8px 24px rgba(0,0,0,0.8);
+  }
+  .footer-bio {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .footer-bio .bio-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+  .footer-bio .bio-text {
+    font-size: 0.78rem;
+    color: #8b949e;
+    line-height: 1.6;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .footer-bio .bio-tags {
+    margin-top: 9px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+  }
+  .footer-bio .bio-tag {
+    font-size: 0.68rem;
+    color: #58a6ff;
+    background: #1c2744;
+    border: 1px solid #2a3f6b;
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+  .footer-social {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .footer-social a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #8b949e;
+    font-size: 0.78rem;
+    transition: color 0.15s;
+  }
+  .footer-social a:hover { color: #58a6ff; }
+  .footer-social svg { width: 20px; height: 20px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="sticky-header">
+    <nav>
+      <a href="/">Monitor</a>
+      <a href="/registers">Server</a>
+      <a href="/config-editor" class="active">Configs</a>
+      <div class="live-switch" id="live-switch" title="Toggle live mode">
+        <span class="live-track"><span class="live-knob"></span></span>
+        <span class="live-label">Static</span>
+      </div>
+      <button class="restart-btn" id="restart-btn" title="Reload configs and restart server">Restart</button>
+      <a href="mailto:">Contact me</a>
+    </nav>
+
+    <div class="byte-order-bar">
+      <span class="bo-label">Byte Order</span>
+      <label><input type="checkbox" id="bo-big_endian"> Big Endian</label>
+      <label><input type="checkbox" id="bo-first_word_low"> First Word Low</label>
+      <label><input type="checkbox" id="bo-first_double_word_low"> First Double Word Low</label>
+      <label><input type="checkbox" id="bo-modicon"> Modicon</label>
+      <span id="bo-status"></span>
+    </div>
+
+    <header>
+      <h1>Config Editor</h1>
+      <div class="header-actions">
+        <span id="save-status"></span>
+        <button id="btn-export-json"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="17"/></svg><span>Export JSON</span></button>
+        <button id="btn-import-json"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Import JSON</span></button>
+        <button id="btn-export-csv"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="17"/></svg><span>Export CSV</span></button>
+        <button id="btn-import-csv"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Import CSV</span></button>
+        <button id="btn-reset" class="danger">Reset to Default</button>
+        <button id="btn-save" class="primary" disabled>Save to File</button>
+      </div>
+    </header>
+    <input type="file" id="file-json" accept=".json" style="display:none" />
+    <input type="file" id="file-csv" accept=".csv" style="display:none" />
+
+    <div class="note">
+      <strong>Note:</strong> Changes are saved to <code>register_configs.json</code>.
+      Restart the server to apply them to the running Modbus simulation.
+    </div>
+
+    <div class="filters">
+      <input id="search" type="text" placeholder="Search name or description…" />
+    </div>
+  </div>
+
+  <div class="panels" id="panels"></div>
+
+  <div id="footer-placeholder"></div>
+  <script>fetch('/footer.html').then(r=>r.text()).then(h=>{document.getElementById('footer-placeholder').outerHTML=h});</script>
+
+  <script>
+    const AREAS = [
+      { key: 'input-register',   label: 'Input Register',   prefix: 3 },
+      { key: 'holding-register', label: 'Holding Register', prefix: 4 },
+      { key: 'coil',             label: 'Coil',             prefix: 0 },
+      { key: 'discrete-input',   label: 'Discrete Input',   prefix: 1 },
+    ];
+
+    const OPTIONAL_NUM = ['scale', 'min_value', 'max_value', 'bit_offset', 'bit_length'];
+    const INT_FIELDS   = ['offset'];
+
+    let configs = [];
+    let dirty = false;
+
+    // ── Dirty state ───────────────────────────────────────────────
+    function setDirty(val) {
+      dirty = val;
+      const el  = document.getElementById('save-status');
+      const btn = document.getElementById('btn-save');
+      if (val) {
+        el.textContent = 'Unsaved changes';
+        el.className = 'dirty';
+        btn.disabled = false;
+      } else {
+        el.textContent = '';
+        el.className = '';
+        btn.disabled = true;
+      }
+    }
+
+    // ── Normalise a config entry: ensure valid type, drop unknown fields ──
+    function normaliseConfig(c) {
+      const rest = { ...c };
+      if (!rest.type) {
+        const isBit = rest.memory_area === 'coil' || rest.memory_area === 'discrete-input';
+        rest.type = isBit ? 'boolean' : 'uint16';
+      }
+      return rest;
+    }
+
+    // ── Load ──────────────────────────────────────────────────────
+    async function loadConfigs() {
+      const res = await fetch('/configs');
+      configs = (await res.json()).map(normaliseConfig);
+      renderPanels();
+    }
+
+    // ── Save ──────────────────────────────────────────────────────
+    async function saveConfigs() {
+      const status = document.getElementById('save-status');
+      try {
+        const res = await fetch('/configs', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(configs),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error ?? 'Unknown error');
+        }
+        setDirty(false);
+        status.textContent = 'Saved!';
+        status.className = 'saved';
+        setTimeout(() => { if (!dirty) { status.textContent = ''; status.className = ''; } }, 2000);
+      } catch (e) {
+        status.textContent = 'Save failed: ' + e.message;
+        status.className = 'error';
+      }
+    }
+
+    // ── Modbus legacy address ─────────────────────────────────────
+    function legacyAddress(area, offset) {
+      const AREA_BASE = {
+        'coil':             0,
+        'discrete-input':   100000,
+        'input-register':   300000,
+        'holding-register': 400000,
+      };
+      const base = AREA_BASE[area];
+      if (base === undefined) return '—';
+      return String(base + offset + 1).padStart(6, '0');
+    }
+
+    // ── HTML escape ───────────────────────────────────────────────
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Type options ──────────────────────────────────────────────
+    const TYPES = ['uint16','int16','uint32','int32','uint64','int64','float32','float64','word','boolean'];
+    function typeOptions(selected) {
+      const sel = selected ?? 'uint16';
+      return TYPES.map(t =>
+        `<option value="${t}" ${t === sel ? 'selected' : ''}>${t}</option>`
+      ).join('');
+    }
+
+    // ── Card HTML ─────────────────────────────────────────────────
+    function cardHtml(c) {
+      const isBit = c.memory_area === 'coil' || c.memory_area === 'discrete-input';
+      return `
+        <div class="reg-card" data-idx="${c._idx}">
+          <div class="card-main">
+            <div class="card-field f-medium">
+              <label>Name</label>
+              <input type="text" data-field="name" value="${esc(c.name ?? '')}" />
+            </div>
+            <div class="card-field f-narrow">
+              <label>Offset</label>
+              <input type="number" data-field="offset" value="${c.offset ?? 0}" min="0" step="1" />
+            </div>
+            <div class="card-field f-narrow">
+              <label>Address</label>
+              <input type="text" class="legacy-addr" readonly value="${legacyAddress(c.memory_area, c.offset ?? 0)}" style="color:#8b949e;cursor:default;" />
+            </div>
+            ${!isBit ? `
+            <div class="card-field f-medium">
+              <label>Type</label>
+              <select data-field="type">${typeOptions(c.type)}</select>
+            </div>
+            <div class="card-field f-narrow">
+              <label>Scale</label>
+              <input type="number" data-field="scale" step="any" value="${c.scale ?? ''}" placeholder="—" />
+            </div>
+            <div class="card-field f-narrow">
+              <label>Min Value</label>
+              <input type="number" data-field="min_value" step="any" value="${c.min_value ?? ''}" placeholder="—" />
+            </div>
+            <div class="card-field f-narrow">
+              <label>Max Value</label>
+              <input type="number" data-field="max_value" step="any" value="${c.max_value ?? ''}" placeholder="—" />
+            </div>
+            <div class="card-field f-narrow">
+              <label>Bit Offset</label>
+              <input type="number" data-field="bit_offset" step="1" min="0" value="${c.bit_offset ?? ''}" placeholder="—" />
+            </div>
+            <div class="card-field f-narrow">
+              <label>Bit Length</label>
+              <input type="number" data-field="bit_length" step="1" min="1" value="${c.bit_length ?? ''}" placeholder="—" />
+            </div>` : ''}
+            <div class="card-field f-wide">
+              <label>Description</label>
+              <input type="text" data-field="description" value="${esc(c.description ?? '')}" placeholder="—" />
+            </div>
+            <button class="card-delete-btn danger" data-idx="${c._idx}">Delete</button>
+          </div>
+        </div>`;
+    }
+
+    // ── Render panels ─────────────────────────────────────────────
+    function renderPanels() {
+      const search = document.getElementById('search').value.toLowerCase();
+
+      document.getElementById('panels').innerHTML = AREAS.map(area => {
+        const rows = configs
+          .map((c, i) => ({ ...c, _idx: i }))
+          .filter(c => c.memory_area === area.key)
+          .filter(c => !search ||
+            (c.name ?? '').toLowerCase().includes(search) ||
+            (c.description ?? '').toLowerCase().includes(search))
+          .sort((a, b) => (a.offset ?? 0) - (b.offset ?? 0));
+
+        const bodyHtml = rows.length
+          ? rows.map(cardHtml).join('')
+          : '<div class="panel-empty">No registers</div>';
+
+        return `
+          <div class="panel">
+            <div class="panel-header ${area.key}">
+              <span>${area.label}</span>
+              <button class="panel-add-btn" data-area="${area.key}">+ Add</button>
+            </div>
+            <div class="panel-body">${bodyHtml}</div>
+          </div>`;
+      }).join('');
+
+      wireEvents();
+    }
+
+    // ── Wire inline events ────────────────────────────────────────
+    function wireEvents() {
+      const panels = document.getElementById('panels');
+
+      // Field change → update model
+      panels.querySelectorAll('.reg-card').forEach(card => {
+        const idx = parseInt(card.dataset.idx);
+        card.querySelectorAll('[data-field]').forEach(el => {
+          el.addEventListener('change', () => updateField(idx, el, card));
+        });
+      });
+
+      // Delete buttons
+      panels.querySelectorAll('.card-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteRow(parseInt(btn.dataset.idx)));
+      });
+
+      // Per-panel Add buttons
+      panels.querySelectorAll('.panel-add-btn').forEach(btn => {
+        btn.addEventListener('click', () => addToArea(btn.dataset.area));
+      });
+    }
+
+    // ── Update a single field in the model ────────────────────────
+    function updateField(idx, el, card) {
+      const field = el.dataset.field;
+      const raw = el.value.trim();
+
+      if (field === 'type') {
+        configs[idx][field] = raw || 'uint16';
+      } else if (field === 'description') {
+        if (raw === '') delete configs[idx][field];
+        else configs[idx][field] = raw;
+      } else if (OPTIONAL_NUM.includes(field)) {
+        if (raw === '') delete configs[idx][field];
+        else configs[idx][field] = parseFloat(raw);
+      } else if (INT_FIELDS.includes(field)) {
+        configs[idx][field] = parseInt(raw, 10) || 0;
+      } else {
+        configs[idx][field] = raw;
+      }
+
+      if (field === 'offset') {
+        const legacyEl = card.querySelector('.legacy-addr');
+        if (legacyEl) legacyEl.value = legacyAddress(configs[idx].memory_area, configs[idx].offset);
+      }
+
+      card.classList.add('modified');
+      setDirty(true);
+    }
+
+    // ── Delete ────────────────────────────────────────────────────
+    function deleteRow(idx) {
+      if (!confirm(`Delete "${configs[idx].name}"?`)) return;
+      configs.splice(idx, 1);
+      setDirty(true);
+      renderPanels();
+    }
+
+    // ── Add register to a specific area ───────────────────────────
+    function addToArea(area) {
+      // Place after the last register in this area so it sorts to the bottom
+      const areaOffsets = configs.filter(c => c.memory_area === area).map(c => c.offset ?? 0);
+      const nextOffset = areaOffsets.length ? Math.max(...areaOffsets) + 1 : 0;
+
+      const isBitArea = area === 'coil' || area === 'discrete-input';
+      configs.push({
+        name: 'new_register',
+        memory_area: area,
+        offset: nextOffset,
+        type: isBitArea ? 'boolean' : 'uint16',
+      });
+      const newIdx = configs.length - 1;
+      setDirty(true);
+      renderPanels();
+
+      // Scroll the exact new card into view and focus its name field
+      const newCard = document.querySelector(`.reg-card[data-idx="${newIdx}"]`);
+      if (newCard) {
+        newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const nameInput = newCard.querySelector('[data-field="name"]');
+        if (nameInput) { nameInput.select(); nameInput.focus(); }
+      }
+    }
+
+    // ── Filters ───────────────────────────────────────────────────
+    document.getElementById('search').addEventListener('input', renderPanels);
+
+    // ── Button wiring ─────────────────────────────────────────────
+    document.getElementById('btn-save').addEventListener('click', saveConfigs);
+
+    document.getElementById('btn-reset').addEventListener('click', async () => {
+      if (!confirm('Reset register_configs.json to default? This cannot be undone.')) return;
+      const status = document.getElementById('save-status');
+      try {
+        const res = await fetch('/configs/reset', { method: 'POST' });
+        if (!res.ok) { const err = await res.json(); throw new Error(err.error ?? 'Unknown error'); }
+        configs = (await res.json()).map(normaliseConfig);
+        setDirty(false);
+        renderPanels();
+        status.textContent = 'Reset to default!';
+        status.className = 'saved';
+        setTimeout(() => { if (!dirty) { status.textContent = ''; status.className = ''; } }, 2000);
+      } catch (e) {
+        status.textContent = 'Reset failed: ' + e.message;
+        status.className = 'error';
+      }
+    });
+
+    // ── CSV helpers ───────────────────────────────────────────────
+    const CSV_COLS  = ['name','memory_area','offset','type','scale','min_value','max_value','bit_offset','bit_length','description'];
+    const CSV_INT   = new Set(['offset']);
+    const CSV_FLOAT = new Set(['scale','min_value','max_value','bit_offset','bit_length']);
+
+    function csvEscape(v) {
+      const s = (v === null || v === undefined) ? '' : String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function configsToCsv(data) {
+      const header = CSV_COLS.join(',');
+      const rows = data.map(c => CSV_COLS.map(col => csvEscape(c[col] ?? '')).join(','));
+      return [header, ...rows].join('\r\n');
+    }
+
+    function parseCsvLine(line) {
+      const result = []; let cur = '', inQuote = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuote) {
+          if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+          else if (ch === '"') { inQuote = false; }
+          else { cur += ch; }
+        } else {
+          if (ch === '"') { inQuote = true; }
+          else if (ch === ',') { result.push(cur); cur = ''; }
+          else { cur += ch; }
+        }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    function csvToConfigs(text) {
+      const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+      const headers = parseCsvLine(lines[0]);
+      const result = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const vals = parseCsvLine(lines[i]);
+        const obj = {};
+        headers.forEach((h, idx) => {
+          const raw = vals[idx] ?? '';
+          if (raw === '') return;
+          if (CSV_INT.has(h))   obj[h] = parseInt(raw, 10);
+          else if (CSV_FLOAT.has(h)) obj[h] = parseFloat(raw);
+          else obj[h] = raw;
+        });
+        result.push(obj);
+      }
+      return result;
+    }
+
+    function downloadFile(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importConfigs(newConfigs) {
+      configs = newConfigs.map(normaliseConfig);
+      const status = document.getElementById('save-status');
+      try {
+        const res = await fetch('/configs', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(configs),
+        });
+        if (!res.ok) { const err = await res.json(); throw new Error(err.error ?? 'Unknown error'); }
+        setDirty(false);
+        renderPanels();
+        status.textContent = 'Imported & saved!';
+        status.className = 'saved';
+        setTimeout(() => { if (!dirty) { status.textContent = ''; status.className = ''; } }, 2000);
+      } catch (e) {
+        status.textContent = 'Import failed: ' + e.message;
+        status.className = 'error';
+      }
+    }
+
+    document.getElementById('btn-export-json').addEventListener('click', () =>
+      downloadFile('register_configs.json', JSON.stringify(configs, null, 2), 'application/json'));
+
+    document.getElementById('btn-export-csv').addEventListener('click', () =>
+      downloadFile('register_configs.csv', configsToCsv(configs), 'text/csv'));
+
+    document.getElementById('btn-import-json').addEventListener('click', () => {
+      document.getElementById('file-json').value = '';
+      document.getElementById('file-json').click();
+    });
+
+    document.getElementById('file-json').addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (!Array.isArray(data)) throw new Error('JSON must be an array');
+        await importConfigs(data);
+      } catch (ex) {
+        const s = document.getElementById('save-status');
+        s.textContent = 'Import failed: ' + ex.message; s.className = 'error';
+      }
+    });
+
+    document.getElementById('btn-import-csv').addEventListener('click', () => {
+      document.getElementById('file-csv').value = '';
+      document.getElementById('file-csv').click();
+    });
+
+    document.getElementById('file-csv').addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        await importConfigs(csvToConfigs(await file.text()));
+      } catch (ex) {
+        const s = document.getElementById('save-status');
+        s.textContent = 'Import failed: ' + ex.message; s.className = 'error';
+      }
+    });
+
+    // ── Live toggle ───────────────────────────────────────────────
+    function applyLiveButton(live) {
+      const sw = document.getElementById('live-switch');
+      sw.classList.toggle('on', live);
+      sw.querySelector('.live-label').textContent = live ? 'Live' : 'Static';
+    }
+    fetch('/live').then(r => r.json()).then(d => applyLiveButton(d.live));
+    document.getElementById('live-switch').addEventListener('click', () => {
+      fetch('/live', { method: 'POST' }).then(r => r.json()).then(d => applyLiveButton(d.live));
+    });
+
+    // ── Byte order bar ────────────────────────────────────────────
+    const BO_KEYS = ['big_endian', 'first_word_low', 'first_double_word_low', 'modicon'];
+    async function loadByteOrder() {
+      const res = await fetch('/server-config');
+      const cfg = await res.json();
+      BO_KEYS.forEach(k => {
+        const el = document.getElementById('bo-' + k);
+        if (el) el.checked = !!cfg[k];
+      });
+    }
+    async function saveByteOrder() {
+      const cfg = {};
+      BO_KEYS.forEach(k => { cfg[k] = document.getElementById('bo-' + k)?.checked ?? false; });
+      await fetch('/server-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) });
+      const el = document.getElementById('bo-status');
+      el.textContent = 'Saved';
+      setTimeout(() => { el.textContent = ''; }, 1500);
+    }
+    loadByteOrder().then(() => {
+      BO_KEYS.forEach(k => {
+        const el = document.getElementById('bo-' + k);
+        if (el) el.addEventListener('change', saveByteOrder);
+      });
+    });
+
+    // ── Restart button ────────────────────────────────────────────
+    document.getElementById('restart-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('restart-btn');
+      btn.textContent = '…'; btn.disabled = true;
+      try {
+        await fetch('/restart', { method: 'POST' });
+        await loadConfigs();
+      } finally {
+        btn.textContent = 'Restart'; btn.disabled = false;
+      }
+    });
+
+    // ── Boot ──────────────────────────────────────────────────────
+    loadConfigs();
+  </script>
+</body>
+</html>

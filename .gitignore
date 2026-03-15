@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE / Tools
+.claude/
+tempCodeRunnerFile.py
+*.swp
+.vscode/

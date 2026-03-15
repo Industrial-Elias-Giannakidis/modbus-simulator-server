@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modbus Register Monitor</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      padding: 0 24px 24px;
+    }
+
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background: #0f1117;
+      z-index: 50;
+      padding-top: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 600; color: #e6edf3; }
+
+    #status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+
+    #dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #3fb950;
+      transition: background 0.3s;
+    }
+    #dot.error { background: #f85149; }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filters input {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+      min-width: 200px;
+    }
+    .filters input:focus { border-color: #58a6ff; }
+
+    /* ── 4-panel grid ── */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #30363d;
+    }
+    .panel-header.input-register   { background:#1a2d47; color:#79c0ff; }
+    .panel-header.holding-register { background:#261a47; color:#bc8cff; }
+    .panel-header.coil             { background:#1a3024; color:#56d364; }
+    .panel-header.discrete-input   { background:#3a2318; color:#ffa657; }
+
+    .panel-rows {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+
+    .panel-col {
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-col:not(:last-child) { border-right: 1px solid #30363d; }
+
+    .reg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px;
+      border-bottom: 1px solid #21262d;
+      border-right: 1px solid #21262d;
+      cursor: default;
+      position: relative;
+      transition: background 0.1s;
+      gap: 8px;
+    }
+    .reg-row:hover { background: #1c2128; }
+
+    .panel-col .reg-row:last-child { border-bottom: none; }
+
+    .reg-name {
+      font-size: 0.83rem;
+      color: #e6edf3;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .reg-value {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.83rem;
+      color: #79c0ff;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .bool-true  { color: #56d364; }
+    .bool-false { color: #f85149; }
+
+    /* ── Tooltip ── */
+    #tooltip-popup {
+      display: none;
+      position: fixed;
+      transform: translateX(-50%);
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      color: #8b949e;
+      white-space: normal;
+      max-width: 260px;
+      text-align: center;
+      z-index: 10;
+      pointer-events: none;
+      line-height: 1.4;
+    }
+    #tooltip-popup.visible { display: block; }
+
+    .panel-empty {
+      padding: 20px;
+      text-align: center;
+      color: #484f58;
+      font-size: 0.83rem;
+    }
+
+    #last-update { font-size: 0.78rem; color: #8b949e; }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    nav a {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      background: #161b22;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    nav a:hover { color: #e6edf3; border-color: #58a6ff; }
+    nav a.active { color: #e6edf3; border-color: #58a6ff; background: #1c2744; }
+
+    /* ── Live toggle switch ── */
+    .live-switch { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-left:auto; }
+    .live-track { position:relative; width:40px; height:22px; background:#30363d; border-radius:11px; border:1px solid #30363d; transition:background .2s,border-color .2s; flex-shrink:0; }
+    .live-knob { position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#8b949e; transition:transform .2s,background .2s; }
+    .live-switch.on .live-track { background:#1f3d2a; border-color:#56d364; }
+    .live-switch.on .live-knob { transform:translateX(18px); background:#56d364; }
+    .live-switch .live-label { font-size:0.83rem; font-weight:500; color:#8b949e; min-width:38px; }
+    .live-switch.on .live-label { color:#56d364; }
+
+    /* ── Restart button ── */
+    .restart-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      background: #161b22;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .restart-btn:hover { color: #e6edf3; border-color: #f85149; }
+    .restart-btn:active { background: #2a1a1a; }
+
+    /* ── Byte order bar ── */
+    .byte-order-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 8px 14px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .byte-order-bar .bo-label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .byte-order-bar label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.83rem;
+      color: #c9d1d9;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #bo-status { font-size: 0.75rem; color: #56d364; margin-left: auto; }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 40px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: stretch;
+    gap: 32px;
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, transparent, #58a6ff55, transparent) 1;
+    background: #0d1117;
+    border-radius: 8px;
+  }
+  .footer-logo {
+    align-self: center;
+    display: flex;
+    align-items: center;
+  }
+  .footer-logo img {
+    width: auto;
+    height: 200px;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow:
+      0 0 18px rgba(0,210,180,0.2),
+      0 4px 12px rgba(0,0,0,0.6);
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.35s ease,
+      brightness 0.35s ease;
+    display: block;
+    cursor: pointer;
+  }
+  .footer-logo img:hover {
+    transform: scale(1.1);
+    box-shadow:
+      0 0 0 2px rgba(0,210,180,0.5),
+      0 0 24px 4px rgba(0,210,180,0.55),
+      0 0 60px 8px rgba(0,210,180,0.2),
+      0 8px 24px rgba(0,0,0,0.8);
+  }
+  .footer-bio {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .footer-bio .bio-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+  .footer-bio .bio-text {
+    font-size: 0.78rem;
+    color: #8b949e;
+    line-height: 1.6;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .footer-bio .bio-tags {
+    margin-top: 9px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+  }
+  .footer-bio .bio-tag {
+    font-size: 0.68rem;
+    color: #58a6ff;
+    background: #1c2744;
+    border: 1px solid #2a3f6b;
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+  .footer-social {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .footer-social a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #8b949e;
+    font-size: 0.78rem;
+    transition: color 0.15s;
+  }
+  .footer-social a:hover { color: #58a6ff; }
+  .footer-social svg { width: 20px; height: 20px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div id="tooltip-popup"></div>
+  <div class="sticky-header">
+    <nav>
+      <a href="/" class="active">Monitor</a>
+      <a href="/registers">Server</a>
+      <a href="/config-editor">Configs</a>
+      <div class="live-switch" id="live-switch" title="Toggle live mode">
+        <span class="live-track"><span class="live-knob"></span></span>
+        <span class="live-label">Static</span>
+      </div>
+      <button class="restart-btn" id="restart-btn" title="Reload configs and restart server">Restart</button>
+      <a href="mailto:">Contact me</a>
+    </nav>
+
+    <div class="byte-order-bar">
+      <span class="bo-label">Byte Order</span>
+      <label><input type="checkbox" id="bo-big_endian"> Big Endian</label>
+      <label><input type="checkbox" id="bo-first_word_low"> First Word Low</label>
+      <label><input type="checkbox" id="bo-first_double_word_low"> First Double Word Low</label>
+      <label><input type="checkbox" id="bo-modicon"> Modicon</label>
+      <span id="bo-status"></span>
+    </div>
+
+    <header>
+      <h1>Monitor</h1>
+      <div id="status">
+        <div id="dot"></div>
+        <span id="last-update">connecting…</span>
+      </div>
+    </header>
+
+    <div class="filters">
+      <input id="search" type="text" placeholder="Search name or description…" />
+    </div>
+  </div>
+
+  <div class="panels" id="panels"></div>
+
+  <div id="footer-placeholder"></div>
+  <script>fetch('/footer.html').then(r=>r.text()).then(h=>{document.getElementById('footer-placeholder').outerHTML=h});</script>
+
+  <script>
+    let configs = [];
+
+    const AREAS = [
+      { key: 'input-register',   label: 'Input Register' },
+      { key: 'holding-register', label: 'Holding Register' },
+      { key: 'coil',             label: 'Coil' },
+      { key: 'discrete-input',   label: 'Discrete Input' },
+    ];
+
+    async function loadConfigs() {
+      const res = await fetch('/configs');
+      configs = await res.json();
+    }
+
+    function formatValue(v, type) {
+      if (v === null || v === undefined) return '<span style="color:#484f58">—</span>';
+      if (type === 'boolean' || v === true || v === false) {
+        return `<span class="${v ? 'bool-true' : 'bool-false'}">${v ? '1 (true)' : '0 (false)'}</span>`;
+      }
+      if (typeof v === 'number') {
+        if (Number.isInteger(v)) return v.toString();
+        return v.toPrecision(6).replace(/\.?0+$/, '');
+      }
+      return String(v);
+    }
+
+    function render(snapshotMap) {
+      const search = document.getElementById('search').value.toLowerCase();
+      const panels = document.getElementById('panels');
+
+      panels.innerHTML = AREAS.map(area => {
+        let rows = configs
+          .filter(c => c.memory_area === area.key)
+          .map(c => ({ ...c, value: snapshotMap.get(`${c.memory_area}:${c.offset}`) ?? null }))
+          .sort((a, b) => a.offset - b.offset);
+
+        if (search) rows = rows.filter(r =>
+          r.name.toLowerCase().includes(search) ||
+          (r.description ?? '').toLowerCase().includes(search)
+        );
+
+        let colsHtml;
+        if (!rows.length) {
+          colsHtml = `<div class="panel-empty" style="grid-column:1/-1">${search ? 'No matches' : 'No registers'}</div>`;
+        } else {
+          const half = Math.ceil(rows.length / 2);
+          const col1 = rows.slice(0, half);
+          const col2 = rows.slice(half);
+          const toRow = r => `
+            <div class="reg-row"${r.description ? ` data-tooltip="${r.description.replace(/"/g, '&quot;')}"` : ''}>
+              <span class="reg-name">${r.name}</span>
+              <span class="reg-value">${formatValue(r.value, r.type)}</span>
+            </div>`;
+          colsHtml = `
+            <div class="panel-col">${col1.map(toRow).join('')}</div>
+            <div class="panel-col">${col2.map(toRow).join('')}</div>`;
+        }
+
+        return `
+          <div class="panel">
+            <div class="panel-header ${area.key}">${area.label}</div>
+            <div class="panel-rows">${colsHtml}</div>
+          </div>`;
+      }).join('');
+    }
+
+    let lastSnapshotMap = new Map();
+
+    async function poll() {
+      try {
+        const [valRes, cfgRes] = await Promise.all([fetch('/realvalues'), fetch('/configs')]);
+        const data = await valRes.json();
+        configs = await cfgRes.json();
+        lastSnapshotMap = new Map(data.map(s => [`${s.memory_area}:${s.offset}`, s.value]));
+        render(lastSnapshotMap);
+        document.getElementById('dot').classList.remove('error');
+        document.getElementById('last-update').textContent =
+          'Updated ' + new Date().toLocaleTimeString();
+      } catch {
+        document.getElementById('dot').classList.add('error');
+        document.getElementById('last-update').textContent = 'Connection lost';
+      }
+    }
+
+    document.getElementById('search').addEventListener('input', () => render(lastSnapshotMap));
+
+    // ── Live toggle ───────────────────────────────────────────────
+    function applyLiveButton(live) {
+      const sw = document.getElementById('live-switch');
+      sw.classList.toggle('on', live);
+      sw.querySelector('.live-label').textContent = live ? 'Live' : 'Static';
+    }
+    fetch('/live').then(r => r.json()).then(d => applyLiveButton(d.live));
+    document.getElementById('live-switch').addEventListener('click', () => {
+      fetch('/live', { method: 'POST' }).then(r => r.json()).then(d => applyLiveButton(d.live));
+    });
+
+    // ── Byte order bar ────────────────────────────────────────────
+    const BO_KEYS = ['big_endian', 'first_word_low', 'first_double_word_low', 'modicon'];
+    async function loadByteOrder() {
+      const res = await fetch('/server-config');
+      const cfg = await res.json();
+      BO_KEYS.forEach(k => {
+        const el = document.getElementById('bo-' + k);
+        if (el) el.checked = !!cfg[k];
+      });
+    }
+    async function saveByteOrder() {
+      const cfg = {};
+      BO_KEYS.forEach(k => { cfg[k] = document.getElementById('bo-' + k)?.checked ?? false; });
+      await fetch('/server-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) });
+      const el = document.getElementById('bo-status');
+      el.textContent = 'Saved';
+      setTimeout(() => { el.textContent = ''; }, 1500);
+    }
+    loadByteOrder().then(() => {
+      BO_KEYS.forEach(k => {
+        const el = document.getElementById('bo-' + k);
+        if (el) el.addEventListener('change', saveByteOrder);
+      });
+    });
+
+    // ── Restart button ────────────────────────────────────────────
+    document.getElementById('restart-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('restart-btn');
+      btn.textContent = '…';
+      btn.disabled = true;
+      try {
+        await fetch('/restart', { method: 'POST' });
+        await loadConfigs();
+        render(lastSnapshotMap);
+      } finally {
+        btn.textContent = 'Restart';
+        btn.disabled = false;
+      }
+    });
+
+    // Boot
+    loadConfigs().then(() => {
+      poll();
+      setInterval(poll, 1000);
+    });
+
+    // Tooltip popup (position: fixed so it is never clipped by panel overflow)
+    const tooltipEl = document.getElementById('tooltip-popup');
+    document.addEventListener('mouseover', e => {
+      const row = e.target.closest('[data-tooltip]');
+      if (!row) return;
+      const text = row.dataset.tooltip;
+      if (!text) return;
+      tooltipEl.textContent = text;
+      const rect = row.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      tooltipEl.style.left = cx + 'px';
+      tooltipEl.style.top = (rect.top - 8) + 'px';
+      tooltipEl.style.transform = 'translateX(-50%) translateY(-100%)';
+      tooltipEl.classList.add('visible');
+    });
+    document.addEventListener('mouseout', e => {
+      const row = e.target.closest('[data-tooltip]');
+      if (!row) return;
+      tooltipEl.classList.remove('visible');
+    });
+  </script>
+</body>
+</html>

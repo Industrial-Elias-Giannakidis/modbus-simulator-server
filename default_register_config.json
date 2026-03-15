@@ -1,0 +1,396 @@
+[
+  {
+    "name": "IR_UINT_16",
+    "description": "16-bit unsigned integer input register",
+    "memory_area": "input-register",
+    "offset": 0,
+    "type": "uint16"
+  },
+  {
+    "name": "IR_UINT_16_X01",
+    "description": "16-bit unsigned integer input register with 0.1 scale factor",
+    "memory_area": "input-register",
+    "offset": 1,
+    "type": "uint16",
+    "scale": 0.1
+  },
+  {
+    "name": "IR_UINT_16_0_100",
+    "description": "16-bit unsigned integer input register clamped to range 0–100",
+    "memory_area": "input-register",
+    "offset": 2,
+    "type": "uint16",
+    "min_value": 0,
+    "max_value": 100
+  },
+  {
+    "name": "IR_INT_16",
+    "description": "16-bit signed integer input register",
+    "memory_area": "input-register",
+    "offset": 3,
+    "type": "int16"
+  },
+  {
+    "name": "IR_INT_16_X002",
+    "description": "16-bit signed integer input register with 0.02 scale factor",
+    "memory_area": "input-register",
+    "offset": 4,
+    "type": "int16",
+    "scale": 0.02
+  },
+  {
+    "name": "IR_INT_16_M100_100",
+    "description": "16-bit signed integer input register clamped to range -100–100",
+    "memory_area": "input-register",
+    "offset": 5,
+    "type": "int16",
+    "min_value": -100,
+    "max_value": 100
+  },
+  {
+    "name": "IR_UINT_32",
+    "description": "32-bit unsigned integer input register spanning 2 registers",
+    "memory_area": "input-register",
+    "offset": 7,
+    "type": "uint32"
+  },
+  {
+    "name": "IR_UINT_32_X3",
+    "description": "32-bit unsigned integer input register with scale factor 3",
+    "memory_area": "input-register",
+    "offset": 9,
+    "type": "uint32",
+    "scale": 3
+  },
+  {
+    "name": "IR_UINT_32_10_20",
+    "description": "32-bit unsigned integer input register clamped to range 10–20",
+    "memory_area": "input-register",
+    "offset": 11,
+    "type": "uint32",
+    "min_value": 10,
+    "max_value": 20
+  },
+  {
+    "name": "IR_INT_32",
+    "description": "32-bit signed integer input register spanning 2 registers",
+    "memory_area": "input-register",
+    "offset": 13,
+    "type": "int32"
+  },
+  {
+    "name": "IR_INT_32_X02",
+    "description": "32-bit signed integer input register with 0.2 scale factor",
+    "memory_area": "input-register",
+    "offset": 15,
+    "type": "int32",
+    "scale": 0.2
+  },
+  {
+    "name": "IR_INT_32_M100_0",
+    "description": "32-bit signed integer input register clamped to range -100–0",
+    "memory_area": "input-register",
+    "offset": 17,
+    "type": "int32",
+    "min_value": -100,
+    "max_value": 0
+  },
+  {
+    "name": "IR_UINT_64",
+    "description": "64-bit unsigned integer input register spanning 4 registers",
+    "memory_area": "input-register",
+    "offset": 19,
+    "type": "uint64"
+  },
+  {
+    "name": "IR_UINT_64_X100",
+    "description": "64-bit unsigned integer input register with scale factor 100",
+    "memory_area": "input-register",
+    "offset": 23,
+    "type": "uint64",
+    "scale": 100
+  },
+  {
+    "name": "IR_UINT_64_0_1",
+    "description": "64-bit unsigned integer input register clamped to range 0–1",
+    "memory_area": "input-register",
+    "offset": 27,
+    "type": "uint64",
+    "min_value": 0,
+    "max_value": 1
+  },
+  {
+    "name": "IR_INT64",
+    "description": "64-bit signed integer input register spanning 4 registers",
+    "memory_area": "input-register",
+    "offset": 31,
+    "type": "int64"
+  },
+  {
+    "name": "IR_INT64_X0001",
+    "description": "64-bit signed integer input register with 0.001 scale factor",
+    "memory_area": "input-register",
+    "offset": 35,
+    "type": "int64",
+    "scale": 0.001
+  },
+  {
+    "name": "IR_INT64_1_10",
+    "description": "64-bit signed integer input register clamped to range 1–10",
+    "memory_area": "input-register",
+    "offset": 39,
+    "type": "int64",
+    "min_value": 1,
+    "max_value": 10
+  },
+  {
+    "name": "IR_FLOAT_32",
+    "description": "32-bit floating point input register spanning 2 registers",
+    "memory_area": "input-register",
+    "offset": 43,
+    "type": "float32"
+  },
+  {
+    "name": "IR_FLOAT_64",
+    "description": "64-bit floating point input register spanning 4 registers",
+    "memory_area": "input-register",
+    "offset": 45,
+    "type": "float64"
+  },
+  {
+    "name": "IR_BOOLEAN_15",
+    "description": "Boolean bit flag at bit 15 of input register 49",
+    "memory_area": "input-register",
+    "offset": 49,
+    "type": "boolean",
+    "bit_offset": 15,
+    "bit_length": 1
+  },
+  {
+    "name": "IR_WORD_0_6",
+    "description": "6-bit word field at bits 0–5 of input register 49",
+    "memory_area": "input-register",
+    "offset": 49,
+    "type": "word",
+    "bit_offset": 0,
+    "bit_length": 6
+  },
+  {
+    "name": "HR_UINT_16",
+    "description": "16-bit unsigned integer holding register",
+    "memory_area": "holding-register",
+    "offset": 0,
+    "type": "uint16"
+  },
+  {
+    "name": "HR_UINT_16_X01",
+    "description": "16-bit unsigned integer holding register with 0.1 scale factor",
+    "memory_area": "holding-register",
+    "offset": 1,
+    "type": "uint16",
+    "scale": 0.1
+  },
+  {
+    "name": "HR_UINT_16_0_100",
+    "description": "16-bit unsigned integer holding register clamped to range 0–100",
+    "memory_area": "holding-register",
+    "offset": 2,
+    "type": "uint16",
+    "min_value": 0,
+    "max_value": 100
+  },
+  {
+    "name": "HR_INT_16",
+    "description": "16-bit signed integer holding register",
+    "memory_area": "holding-register",
+    "offset": 3,
+    "type": "int16"
+  },
+  {
+    "name": "HR_INT_16_X002",
+    "description": "16-bit signed integer holding register with 0.02 scale factor",
+    "memory_area": "holding-register",
+    "offset": 4,
+    "type": "int16",
+    "scale": 0.02
+  },
+  {
+    "name": "HR_INT_16_M100_100",
+    "description": "16-bit signed integer holding register clamped to range -100–100",
+    "memory_area": "holding-register",
+    "offset": 5,
+    "type": "int16",
+    "min_value": -100,
+    "max_value": 100
+  },
+  {
+    "name": "HR_UINT_32",
+    "description": "32-bit unsigned integer holding register spanning 2 registers",
+    "memory_area": "holding-register",
+    "offset": 7,
+    "type": "uint32"
+  },
+  {
+    "name": "HR_UINT_32_X3",
+    "description": "32-bit unsigned integer holding register with scale factor 3",
+    "memory_area": "holding-register",
+    "offset": 9,
+    "type": "uint32",
+    "scale": 3
+  },
+  {
+    "name": "HR_UINT_32_10_20",
+    "description": "32-bit unsigned integer holding register clamped to range 10–20",
+    "memory_area": "holding-register",
+    "offset": 11,
+    "type": "uint32",
+    "min_value": 10,
+    "max_value": 20
+  },
+  {
+    "name": "HR_INT_32",
+    "description": "32-bit signed integer holding register spanning 2 registers",
+    "memory_area": "holding-register",
+    "offset": 13,
+    "type": "int32"
+  },
+  {
+    "name": "HR_INT_32_X02",
+    "description": "32-bit signed integer holding register with 0.2 scale factor",
+    "memory_area": "holding-register",
+    "offset": 15,
+    "type": "int32",
+    "scale": 0.2
+  },
+  {
+    "name": "HR_INT_32_M100_0",
+    "description": "32-bit signed integer holding register clamped to range -100–0",
+    "memory_area": "holding-register",
+    "offset": 17,
+    "type": "int32",
+    "min_value": -100,
+    "max_value": 0
+  },
+  {
+    "name": "HR_UINT_64",
+    "description": "64-bit unsigned integer holding register spanning 4 registers",
+    "memory_area": "holding-register",
+    "offset": 19,
+    "type": "uint64"
+  },
+  {
+    "name": "HR_UINT_64_X100",
+    "description": "64-bit unsigned integer holding register with scale factor 100",
+    "memory_area": "holding-register",
+    "offset": 23,
+    "type": "uint64",
+    "scale": 100
+  },
+  {
+    "name": "HR_UINT_64_0_1",
+    "description": "64-bit unsigned integer holding register clamped to range 0–1",
+    "memory_area": "holding-register",
+    "offset": 27,
+    "type": "uint64",
+    "min_value": 0,
+    "max_value": 1
+  },
+  {
+    "name": "HR_INT64",
+    "description": "64-bit signed integer holding register spanning 4 registers",
+    "memory_area": "holding-register",
+    "offset": 31,
+    "type": "int64"
+  },
+  {
+    "name": "HR_INT64_X0001",
+    "description": "64-bit signed integer holding register with 0.001 scale factor",
+    "memory_area": "holding-register",
+    "offset": 35,
+    "type": "int64",
+    "scale": 0.001
+  },
+  {
+    "name": "HR_INT64_1_10",
+    "description": "64-bit signed integer holding register clamped to range 1–10",
+    "memory_area": "holding-register",
+    "offset": 39,
+    "type": "int64",
+    "min_value": 1,
+    "max_value": 10
+  },
+  {
+    "name": "HR_FLOAT_32",
+    "description": "32-bit floating point holding register spanning 2 registers",
+    "memory_area": "holding-register",
+    "offset": 43,
+    "type": "float32"
+  },
+  {
+    "name": "HR_FLOAT_64",
+    "description": "64-bit floating point holding register spanning 4 registers",
+    "memory_area": "holding-register",
+    "offset": 45,
+    "type": "float64"
+  },
+  {
+    "name": "HR_BOOLEAN_15",
+    "description": "Boolean bit flag at bit 15 of holding register 49",
+    "memory_area": "holding-register",
+    "offset": 49,
+    "type": "boolean",
+    "bit_offset": 15,
+    "bit_length": 1
+  },
+  {
+    "name": "HR_WORD_0_6",
+    "description": "6-bit word field at bits 0–5 of holding register 49",
+    "memory_area": "holding-register",
+    "offset": 49,
+    "type": "word",
+    "bit_offset": 0,
+    "bit_length": 6
+  },
+  {
+    "name": "COIL_1",
+    "description": "Boolean coil at offset 0",
+    "memory_area": "coil",
+    "offset": 0,
+    "type": "boolean"
+  },
+  {
+    "name": "COIL_2",
+    "description": "Boolean coil at offset 1",
+    "memory_area": "coil",
+    "offset": 1,
+    "type": "boolean"
+  },
+  {
+    "name": "COIL_3",
+    "description": "Boolean coil at offset 2",
+    "memory_area": "coil",
+    "offset": 2,
+    "type": "boolean"
+  },
+  {
+    "name": "DISCRETE_INPUT_1",
+    "description": "Boolean discrete input at offset 0",
+    "memory_area": "discrete-input",
+    "offset": 0,
+    "type": "boolean"
+  },
+  {
+    "name": "DISCRETE_INPUT_2",
+    "description": "Boolean discrete input at offset 1",
+    "memory_area": "discrete-input",
+    "offset": 1,
+    "type": "boolean"
+  },
+  {
+    "name": "DISCRETE_INPUT_3",
+    "description": "Boolean discrete input at offset 2",
+    "memory_area": "discrete-input",
+    "offset": 2,
+    "type": "boolean"
+  }
+]
