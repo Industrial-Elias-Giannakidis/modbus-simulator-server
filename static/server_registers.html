@@ -480,8 +480,9 @@
         <div class="bits-grid">${cells}</div>`;
     }
 
-    function rowHtml(r, prefix) {
-      const hasBits = r.value !== null && r.value !== undefined && typeof r.value !== 'string';
+    function rowHtml(r, prefix, areaKey) {
+      const isBitArea = areaKey === 'coil' || areaKey === 'discrete-input';
+      const hasBits = !isBitArea && r.value !== null && r.value !== undefined && typeof r.value !== 'string';
       const toggleHtml = hasBits
         ? `<span class="reg-toggle" title="Show bits">&#9654;</span>`
         : `<span style="width:16px;flex-shrink:0"></span>`;
@@ -533,9 +534,9 @@
           const col2 = rows.slice(third, third * 2);
           const col3 = rows.slice(third * 2);
           colsHtml = `
-            <div class="panel-col">${col1.map(r => rowHtml(r, area.prefix)).join('')}</div>
-            <div class="panel-col">${col2.map(r => rowHtml(r, area.prefix)).join('')}</div>
-            <div class="panel-col">${col3.map(r => rowHtml(r, area.prefix)).join('')}</div>`;
+            <div class="panel-col">${col1.map(r => rowHtml(r, area.prefix, area.key)).join('')}</div>
+            <div class="panel-col">${col2.map(r => rowHtml(r, area.prefix, area.key)).join('')}</div>
+            <div class="panel-col">${col3.map(r => rowHtml(r, area.prefix, area.key)).join('')}</div>`;
         }
 
         return `
