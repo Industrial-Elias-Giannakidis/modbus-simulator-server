@@ -6,7 +6,6 @@ A Modbus TCP server that simulates industrial device registers with a web-based 
 
 - Modbus TCP server (coils, discrete inputs, holding registers, input registers)
 - Web UI for real-time register monitoring and configuration
-- Configurable register functions: `const`, `sin`, `random`, `const_smooth`, `smooth`, `validated`
 - Endianness/byte-order conversion support
 - Live register editing via web interface
 
@@ -86,9 +85,7 @@ Registers are defined in `register_configs.json`. Each entry supports:
 | `offset` | Starting Modbus address |
 | `memory_area` | `coil`, `discrete-input`, `holding-register`, `input-register` |
 | `type` | `int16`, `uint16`, `int32`, `uint32`, `int64`, `uint64`, `float32`, `float64`, `boolean`, `word` |
-| `function` | `const`, `sin`, `random`, `const_smooth`, `smooth`, `validated` |
-| `a`, `b`, `c` | Function parameters (min, max, frequency) |
-| `scale`, `min_value`, `max_value` | Optional scaling |
+| `scale`, `min_value`, `max_value` | Optional scaling (integers only; cannot mix `scale` with `min/max`) |
 | `bit_offset`, `bit_length` | For `word` type bit-field extraction |
 
 ## Running Tests
