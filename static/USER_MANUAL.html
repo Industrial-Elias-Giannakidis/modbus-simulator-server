@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modbus Server Simulator — User Manual</title>
+<link rel="icon" type="image/png" href="/logo.png" />
+<link rel="stylesheet" href="/footer.css" />
+<link rel="stylesheet" href="/theme.css" />
+<script src="/theme.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 11pt;
+    color: #c9d1d9;
+    background: #0f1117;
+    line-height: 1.6;
+  }
+
+  /* ── Sticky nav ── */
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    background: #0f1117;
+    z-index: 50;
+    padding: 16px 24px 0;
+    border-bottom: 1px solid #21262d;
+  }
+
+  nav {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+
+  nav a {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    background: #161b22;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  nav a:hover { color: #e6edf3; border-color: #58a6ff; }
+  nav a.active { color: #e6edf3; border-color: #58a6ff; background: #1c2744; }
+
+  /* ── Cover Page ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0d1117 0%, #0f1117 50%, #0d1f3c 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+  }
+  .cover-logo {
+    height: 120px;
+    width: auto;
+    margin-bottom: 28px;
+    border-radius: 14px;
+    box-shadow:
+      0 0 24px rgba(0,210,180,0.25),
+      0 4px 16px rgba(0,0,0,0.6);
+  }
+  .cover .badge {
+    background: #58a6ff;
+    color: #0d1117;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+  }
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+    line-height: 1.1;
+    color: #e6edf3;
+  }
+  .cover h1 span { color: #58a6ff; }
+  .cover .subtitle {
+    font-size: 14pt;
+    color: #8b949e;
+    margin-bottom: 50px;
+    font-weight: 300;
+    max-width: 500px;
+  }
+  .cover .version-box {
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 20px 40px;
+    display: flex;
+    gap: 50px;
+    background: rgba(22,27,34,0.7);
+  }
+  .cover .version-box .item { text-align: center; }
+  .cover .version-box .item .val {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #58a6ff;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+  .cover .version-box .item .lbl {
+    font-size: 8pt;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  .cover .footer-note {
+    position: absolute;
+    bottom: 30px;
+    font-size: 8pt;
+    color: #8b949e;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── Content layout ── */
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 50px 60px;
+  }
+
+  /* ── Section titles ── */
+  .section-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #58a6ff;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #e6edf3;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  h3 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #79c0ff;
+    margin: 28px 0 10px 0;
+    border-left: 4px solid #58a6ff;
+    padding-left: 12px;
+  }
+  .lead {
+    font-size: 12pt;
+    color: #8b949e;
+    margin-bottom: 30px;
+    line-height: 1.7;
+  }
+  p { margin-bottom: 12px; color: #c9d1d9; }
+  p strong { color: #e6edf3; }
+  p em { color: #8b949e; font-style: italic; }
+  ol li { color: #c9d1d9; }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid #30363d;
+    margin: 40px 0;
+  }
+
+  /* ── Screen mock ── */
+  .screen-mock {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 24px 0 30px 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .screen-mock .topbar {
+    background: #0d1117;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #21262d;
+  }
+  .screen-mock .topbar .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .screen-mock .topbar .dot.r { background: #f85149; }
+  .screen-mock .topbar .dot.y { background: #ffa657; }
+  .screen-mock .topbar .dot.g { background: #56d364; }
+  .screen-mock .topbar .addr {
+    margin-left: 10px;
+    background: #161b22;
+    color: #8b949e;
+    font-size: 8pt;
+    padding: 3px 14px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    border: 1px solid #30363d;
+  }
+  .screen-mock .content {
+    padding: 20px;
+    background: #0f1117;
+  }
+
+  /* Monitor mock */
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .nav-tabs .tab {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    background: #161b22;
+    color: #8b949e;
+    cursor: default;
+    border: 1px solid #30363d;
+  }
+  .nav-tabs .tab.active {
+    background: #1c2744;
+    color: #e6edf3;
+    border-color: #58a6ff;
+  }
+
+  .status-bar {
+    background: #161b22;
+    color: #8b949e;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 8pt;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    border: 1px solid #30363d;
+  }
+  .status-bar .dot-live {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #56d364;
+    display: inline-block;
+    margin-right: 4px;
+    box-shadow: 0 0 6px #56d364;
+  }
+  .status-bar .pill {
+    background: rgba(255,255,255,0.05);
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 7.5pt;
+    border: 1px solid #30363d;
+  }
+  .status-bar .pill.on { background: rgba(88,166,255,0.15); color: #58a6ff; border-color: #58a6ff; }
+
+  .grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .reg-panel {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #30363d;
+  }
+  .reg-panel .panel-head {
+    padding: 7px 12px;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .reg-panel .panel-head.ir  { background: #1a2d47; color: #79c0ff; }
+  .reg-panel .panel-head.hr  { background: #261a47; color: #bc8cff; }
+  .reg-panel .panel-head.co  { background: #1a3024; color: #56d364; }
+  .reg-panel .panel-head.di  { background: #3a2318; color: #ffa657; }
+  .reg-panel .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 12px;
+    font-size: 8pt;
+    border-bottom: 1px solid #21262d;
+    background: #0f1117;
+  }
+  .reg-panel .row:last-child { border-bottom: none; }
+  .reg-panel .row .name { color: #e6edf3; font-weight: 600; }
+  .reg-panel .row .val { color: #79c0ff; font-weight: 700; font-family: 'Cascadia Code', 'Fira Code', monospace; }
+  .reg-panel .row .val.bool-true  { color: #56d364; }
+  .reg-panel .row .val.bool-false { color: #f85149; }
+
+  /* Server registers mock */
+  .srv-table {
+    width: 100%;
+    font-size: 8pt;
+    border-collapse: collapse;
+  }
+  .srv-table th {
+    background: #161b22;
+    color: #8b949e;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 7pt;
+    border-bottom: 1px solid #30363d;
+  }
+  .srv-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #21262d;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    color: #c9d1d9;
+  }
+  .srv-table tr:nth-child(even) td { background: #1c2128; }
+  .srv-table .addr { color: #8b949e; }
+  .srv-table .raw  { color: #79c0ff; font-weight: 700; }
+  .srv-table .bits-row td {
+    background: #161b22;
+    padding: 4px 10px;
+    font-size: 7pt;
+    color: #8b949e;
+  }
+
+  /* Config mock */
+  .cfg-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .cfg-card.modified {
+    border-color: #ffa657;
+    background: #1e1608;
+  }
+  .cfg-card .cfg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .cfg-card .cfg-name {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .cfg-card .cfg-type {
+    font-size: 7.5pt;
+    background: #1c2744;
+    color: #79c0ff;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    border: 1px solid #2a3f6b;
+  }
+  .cfg-fields {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .cfg-field label {
+    display: block;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b949e;
+    margin-bottom: 2px;
+  }
+  .cfg-field input {
+    width: 100%;
+    border: 1px solid #30363d;
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 8pt;
+    color: #c9d1d9;
+    background: #0f1117;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  /* ── Feature cards ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .feature-card {
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px 16px;
+    background: #161b22;
+    transition: border-color 0.15s;
+  }
+  .feature-card:hover { border-color: #58a6ff; }
+  .feature-card .icon {
+    font-size: 20pt;
+    margin-bottom: 8px;
+  }
+  .feature-card h4 {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 6px;
+  }
+  .feature-card p {
+    font-size: 8.5pt;
+    color: #8b949e;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ── Tables ── */
+  table.info {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 9.5pt;
+  }
+  table.info th {
+    background: #161b22;
+    color: #8b949e;
+    padding: 9px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #30363d;
+  }
+  table.info td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #21262d;
+    vertical-align: top;
+    color: #c9d1d9;
+  }
+  table.info tr:last-child td { border-bottom: none; }
+  table.info tr:nth-child(even) td { background: #1c2128; }
+  table.info td strong { color: #e6edf3; }
+  table.info td code {
+    background: #1c2744;
+    border: 1px solid #2a3f6b;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 8.5pt;
+    color: #79c0ff;
+  }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout.info  { background: #0d1f3c; border-left: 4px solid #58a6ff; }
+  .callout.warn  { background: #2a1e0a; border-left: 4px solid #ffa657; }
+  .callout.tip   { background: #0a2310; border-left: 4px solid #56d364; }
+  .callout .icon { font-size: 14pt; flex-shrink: 0; margin-top: 1px; }
+  .callout .body p { font-size: 9.5pt; color: #c9d1d9; margin: 0; line-height: 1.6; }
+  .callout .body strong { color: #e6edf3; }
+  .callout .body code {
+    background: #1c2744;
+    border: 1px solid #2a3f6b;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 8.5pt;
+    color: #79c0ff;
+  }
+
+  /* ── Byte order diagram ── */
+  .byte-diagram {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 8.5pt;
+  }
+  .byte-diagram .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .byte-diagram .lbl {
+    min-width: 150px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #8b949e;
+  }
+  .byte-diagram .words {
+    display: flex;
+    gap: 4px;
+  }
+  .byte-diagram .word {
+    background: #0f1117;
+    border: 1px solid #30363d;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 8pt;
+    text-align: center;
+    min-width: 56px;
+    color: #c9d1d9;
+  }
+  .byte-diagram .word.hi { background: #1a2d47; border-color: #58a6ff; color: #79c0ff; }
+  .byte-diagram .word.lo { background: #261a47; border-color: #bc8cff; color: #bc8cff; }
+
+  /* ── Connection info ── */
+  .conn-box {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 22px 28px;
+    margin: 20px 0;
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .conn-box .item .lbl {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8b949e;
+    margin-bottom: 4px;
+  }
+  .conn-box .item .val {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #58a6ff;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  /* ── Page breaks for print ── */
+  @media print {
+    .sticky-header { position: relative; }
+    .page-break { page-break-before: always; }
+    .screen-mock { break-inside: avoid; }
+    .feature-grid { break-inside: avoid; }
+    .callout { break-inside: avoid; }
+    body { font-size: 10pt; }
+    .cover .footer-note { position: fixed; }
+  }
+
+  .toc { margin: 30px 0; }
+  .toc ol { padding-left: 20px; }
+  .toc li { padding: 4px 0; font-size: 11pt; color: #c9d1d9; }
+  .toc li span { float: right; color: #8b949e; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ NAV ══ -->
+<div class="sticky-header">
+  <nav>
+    <a href="/">Monitor</a>
+    <a href="/registers">Server</a>
+    <a href="/config-editor">Configs</a>
+    <a href="/manual" class="active">Manual</a>
+    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle light/dark mode" title="Toggle light/dark mode" style="margin-left:auto">
+      <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <img src="/logo.png" alt="Logo" class="cover-logo" />
+  <div class="badge">User Manual</div>
+  <h1>Modbus Server<br><span>Simulator</span></h1>
+  <p class="subtitle">Web-based Modbus TCP register simulator for testing and commissioning SCADA systems</p>
+  <div class="version-box">
+    <div class="item"><div class="val">5020</div><div class="lbl">Modbus TCP Port</div></div>
+    <div class="item"><div class="val">8080</div><div class="lbl">Web UI Port</div></div>
+    <div class="item"><div class="val">300</div><div class="lbl">Registers / Area</div></div>
+  </div>
+  <div class="footer-note">For SCADA Engineers &nbsp;·&nbsp; Modbus TCP Simulator</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ INTRO ══ -->
+<div class="page">
+  <div class="section-label">Overview</div>
+  <h2>What is this tool?</h2>
+  <p class="lead">
+    The Modbus Server Simulator replaces a physical PLC or field device on your network.
+    It responds to any standard Modbus TCP client exactly as a real device would — letting you
+    configure registers, data types, and scaling without touching hardware.
+  </p>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon">🔌</div>
+      <h4>Real Modbus TCP Server</h4>
+      <p>Responds to any Modbus TCP client on port 5020. Coils, discrete inputs, holding and input registers — all supported.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📊</div>
+      <h4>Live Web Dashboard</h4>
+      <p>Monitor register values in real time from any browser on the network. No software installation needed on your PC.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">⚙️</div>
+      <h4>Fully Configurable</h4>
+      <p>Define register names, data types, scaling, and bit fields through the web interface. Changes apply instantly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🔄</div>
+      <h4>Byte Order Control</h4>
+      <p>Switch endianness on the fly. Test Big Endian, Little Endian, Modicon word order — no restart required.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📐</div>
+      <h4>Multi-Register Types</h4>
+      <p>Supports 16, 32 and 64-bit integers, IEEE 754 floats, booleans, and bit-field word extractions.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">💾</div>
+      <h4>Import / Export</h4>
+      <p>Save and load register configurations as JSON or CSV. Easily share configurations between projects.</p>
+    </div>
+  </div>
+
+  <h3>Connecting to the simulator</h3>
+  <p>The simulator is already running. Use these parameters in your Modbus TCP client or SCADA system:</p>
+
+  <div class="conn-box">
+    <div class="item"><div class="lbl">Host / IP Address</div><div class="val">localhost</div></div>
+    <div class="item"><div class="lbl">TCP Port</div><div class="val">5020</div></div>
+    <div class="item"><div class="lbl">Unit ID / Slave ID</div><div class="val">1</div></div>
+    <div class="item"><div class="lbl">Web UI</div><div class="val">:8080</div></div>
+  </div>
+
+  <div class="callout info">
+    <div class="icon">ℹ️</div>
+    <div class="body"><p><strong>Running in a container?</strong> Replace <em>localhost</em> with the IP address of the machine running the container. Ports 5020 (Modbus) and 8080 (Web UI) must be accessible on your network.</p></div>
+  </div>
+
+  <h3>Memory areas at a glance</h3>
+  <table class="info">
+    <tr><th>Memory Area</th><th>Modbus Function Codes</th><th>Access</th><th>Typical Use</th></tr>
+    <tr><td><strong>Coils</strong></td><td>FC 01 / FC 05 / FC 15</td><td>Read / Write</td><td>Digital output flags (ON/OFF)</td></tr>
+    <tr><td><strong>Discrete Inputs</strong></td><td>FC 02</td><td>Read only</td><td>Digital input signals (ON/OFF)</td></tr>
+    <tr><td><strong>Holding Registers</strong></td><td>FC 03 / FC 06 / FC 16</td><td>Read / Write</td><td>Setpoints, parameters, measured values</td></tr>
+    <tr><td><strong>Input Registers</strong></td><td>FC 04</td><td>Read only</td><td>Sensor values, process data</td></tr>
+  </table>
+
+  <div class="callout tip">
+    <div class="icon">✅</div>
+    <div class="body"><p><strong>Each memory area holds up to 300 registers</strong> (addresses 0 – 299). The simulator refreshes all register values every second.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ PAGE: MONITOR ══ -->
+<div class="page page-break">
+  <div class="section-label">Page 1 of 3</div>
+  <h2>Monitor Page</h2>
+  <p class="lead">The main dashboard. Shows the current value of every configured register, updated live every second.</p>
+  <p>Access it at: <strong>http://&lt;server-ip&gt;:8080/</strong></p>
+
+  <!-- Screen mock -->
+  <div class="screen-mock">
+    <div class="topbar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="addr">http://localhost:8080/</div>
+    </div>
+    <div class="content">
+      <div class="nav-tabs">
+        <div class="tab active">Monitor</div>
+        <div class="tab">Server Registers</div>
+        <div class="tab">Config Editor</div>
+      </div>
+      <div class="status-bar">
+        <span><span class="dot-live"></span> Connected</span>
+        <span>Last update: 12:34:05</span>
+        <span class="pill on">● Live</span>
+        <span class="pill">Big Endian</span>
+        <span class="pill">First Word Low</span>
+        <span class="pill">First DWord Low</span>
+        <span class="pill">Modicon</span>
+        <span style="margin-left:auto; font-size:7.5pt; color:#8b949e;">🔍 Search registers...</span>
+      </div>
+      <div class="grid-2x2">
+        <div class="reg-panel">
+          <div class="panel-head ir">Input Registers</div>
+          <div class="row"><span class="name">IR_UINT_16</span><span class="val">1 234</span></div>
+          <div class="row"><span class="name">IR_FLOAT_32</span><span class="val">3.14159</span></div>
+          <div class="row"><span class="name">IR_INT_32</span><span class="val">-45 000</span></div>
+          <div class="row"><span class="name">IR_BOOLEAN_15</span><span class="val bool-true">true</span></div>
+        </div>
+        <div class="reg-panel">
+          <div class="panel-head hr">Holding Registers</div>
+          <div class="row"><span class="name">SETPOINT_TEMP</span><span class="val">85.5</span></div>
+          <div class="row"><span class="name">FLOW_RATE</span><span class="val">120</span></div>
+          <div class="row"><span class="name">PRESSURE</span><span class="val">4.20</span></div>
+          <div class="row"><span class="name">STATUS_WORD</span><span class="val">0x00FF</span></div>
+        </div>
+        <div class="reg-panel">
+          <div class="panel-head co">Coils</div>
+          <div class="row"><span class="name">PUMP_RUNNING</span><span class="val bool-true">true</span></div>
+          <div class="row"><span class="name">VALVE_OPEN</span><span class="val bool-false">false</span></div>
+          <div class="row"><span class="name">ALARM_ACK</span><span class="val bool-false">false</span></div>
+        </div>
+        <div class="reg-panel">
+          <div class="panel-head di">Discrete Inputs</div>
+          <div class="row"><span class="name">LIMIT_SWITCH_HI</span><span class="val bool-true">true</span></div>
+          <div class="row"><span class="name">LIMIT_SWITCH_LO</span><span class="val bool-false">false</span></div>
+          <div class="row"><span class="name">DOOR_CLOSED</span><span class="val bool-true">true</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Status bar</h3>
+  <table class="info">
+    <tr><th>Indicator</th><th>Meaning</th></tr>
+    <tr><td>🟢 Connected</td><td>The simulator is running and responding normally.</td></tr>
+    <tr><td>🔴 Connection error</td><td>The server is unreachable — check the container is still running.</td></tr>
+    <tr><td>● Live / Static</td><td>When Live (blue), the dashboard auto-refreshes every second. Click to freeze the display.</td></tr>
+    <tr><td>Last update timestamp</td><td>Time of the most recent successful data refresh.</td></tr>
+  </table>
+
+  <h3>Byte order controls</h3>
+  <p>Four checkboxes in the status bar let you change how multi-byte values are packed into 16-bit registers. Changes take effect immediately — no restart needed. This is covered in detail in the <strong>Byte Order</strong> section of this manual.</p>
+
+  <h3>Search / filter</h3>
+  <p>Type any part of a register name or description into the search box. Only matching registers are shown across all four panels. Useful when monitoring a large configuration.</p>
+
+  <div class="callout warn">
+    <div class="icon">⚠️</div>
+    <div class="body"><p><strong>Values on this page are the pre-conversion values</strong> — they show numbers as defined by your scaling configuration. To see the exact raw 16-bit words that your Modbus client reads, use the <strong>Server Registers</strong> page.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ PAGE: SERVER REGISTERS ══ -->
+<div class="page page-break">
+  <div class="section-label">Page 2 of 3</div>
+  <h2>Server Registers Page</h2>
+  <p class="lead">Shows the exact raw 16-bit values stored in the Modbus server memory — exactly what your PLC or SCADA system reads when it polls the simulator.</p>
+  <p>Access it at: <strong>http://&lt;server-ip&gt;:8080/registers</strong></p>
+
+  <div class="screen-mock">
+    <div class="topbar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="addr">http://localhost:8080/registers</div>
+    </div>
+    <div class="content">
+      <div class="nav-tabs">
+        <div class="tab">Monitor</div>
+        <div class="tab active">Server Registers</div>
+        <div class="tab">Config Editor</div>
+      </div>
+      <table class="srv-table">
+        <tr>
+          <th>Name</th>
+          <th>Offset</th>
+          <th>Modbus Address</th>
+          <th>Raw Value</th>
+          <th>Expand</th>
+        </tr>
+        <tr>
+          <td>IR_UINT_16</td>
+          <td class="addr">0</td>
+          <td class="addr">300001</td>
+          <td class="raw">0x04D2</td>
+          <td>▶</td>
+        </tr>
+        <tr>
+          <td>IR_FLOAT_32 (word 1)</td>
+          <td class="addr">7</td>
+          <td class="addr">300008</td>
+          <td class="raw">0x4049</td>
+          <td>▶</td>
+        </tr>
+        <tr>
+          <td>IR_FLOAT_32 (word 2)</td>
+          <td class="addr">8</td>
+          <td class="addr">300009</td>
+          <td class="raw">0x0FC0</td>
+          <td>▼</td>
+        </tr>
+        <tr class="bits-row">
+          <td colspan="5">
+            Bits: &nbsp; 15=<strong>0</strong> &nbsp; 14=<strong>1</strong> &nbsp; 13=<strong>0</strong> &nbsp; 12=<strong>0</strong> &nbsp; 11=<strong>0</strong> &nbsp; 10=<strong>0</strong> &nbsp; 9=<strong>0</strong> &nbsp; 8=<strong>0</strong> &nbsp; ... &nbsp; Hex: 0x0FC0
+          </td>
+        </tr>
+        <tr>
+          <td>PUMP_RUNNING</td>
+          <td class="addr">0</td>
+          <td class="addr">000001</td>
+          <td class="raw" style="color:#56d364">1 (true)</td>
+          <td>—</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Columns explained</h3>
+  <table class="info">
+    <tr><th>Column</th><th>Description</th></tr>
+    <tr><td><strong>Name</strong></td><td>Register name as defined in your configuration.</td></tr>
+    <tr><td><strong>Offset</strong></td><td>Zero-based register address (0 = first register in the area).</td></tr>
+    <tr><td><strong>Modbus Address</strong></td><td>Legacy 6-digit Modbus address format used by many SCADA systems (e.g. 300001 = Input Register 0, 400001 = Holding Register 0).</td></tr>
+    <tr><td><strong>Raw Value</strong></td><td>The actual 16-bit word value in hexadecimal, as read by a Modbus FC03/FC04 call.</td></tr>
+    <tr><td><strong>▶ Expand</strong></td><td>Click to reveal the individual bit values (bits 0–15) for that register word.</td></tr>
+  </table>
+
+  <h3>Legacy Modbus address prefixes</h3>
+  <table class="info">
+    <tr><th>Prefix</th><th>Memory Area</th><th>Example</th></tr>
+    <tr><td><code>0xxxxx</code></td><td>Coils</td><td>000001 = Coil offset 0</td></tr>
+    <tr><td><code>1xxxxx</code></td><td>Discrete Inputs</td><td>100001 = DI offset 0</td></tr>
+    <tr><td><code>3xxxxx</code></td><td>Input Registers</td><td>300001 = IR offset 0</td></tr>
+    <tr><td><code>4xxxxx</code></td><td>Holding Registers</td><td>400001 = HR offset 0</td></tr>
+  </table>
+
+  <h3>When to use this page</h3>
+  <p>Use the Server Registers page when your SCADA client is reading unexpected values. Compare the raw hex value here with what your client receives — if they differ, there is a byte-order mismatch. Use the byte order checkboxes to correct it.</p>
+
+  <div class="callout tip">
+    <div class="icon">✅</div>
+    <div class="body"><p><strong>32 and 64-bit registers span multiple rows</strong> — one row per 16-bit word. For a <code>float32</code> at offset 7, you will see two rows: offset 7 (high word) and offset 8 (low word). The bit expansion is available for each word individually.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ PAGE: CONFIG EDITOR ══ -->
+<div class="page page-break">
+  <div class="section-label">Page 3 of 3</div>
+  <h2>Config Editor Page</h2>
+  <p class="lead">Define, modify, and organise the registers that the simulator exposes. Every change saved here takes effect immediately — your Modbus clients will read the updated structure on their next poll.</p>
+  <p>Access it at: <strong>http://&lt;server-ip&gt;:8080/config-editor</strong></p>
+
+  <div class="screen-mock">
+    <div class="topbar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="addr">http://localhost:8080/config-editor</div>
+    </div>
+    <div class="content">
+      <div class="nav-tabs">
+        <div class="tab">Monitor</div>
+        <div class="tab">Server Registers</div>
+        <div class="tab active">Config Editor</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; font-size:8pt;">
+        <button style="padding:5px 12px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:5px; cursor:default;">Export JSON</button>
+        <button style="padding:5px 12px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:5px; cursor:default;">Import JSON</button>
+        <button style="padding:5px 12px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:5px; cursor:default;">Export CSV</button>
+        <button style="padding:5px 12px; background:#161b22; color:#c9d1d9; border:1px solid #30363d; border-radius:5px; cursor:default;">Import CSV</button>
+        <button style="padding:5px 12px; background:#3d0f0d; color:#f85149; border:1px solid #f85149; border-radius:5px; cursor:default;">Reset to Default</button>
+        <button style="padding:5px 12px; background:#1c2744; color:#58a6ff; border:1px solid #2a3f6b; border-radius:5px; cursor:default;">💾 Save to File</button>
+        <span style="margin-left:auto; padding:5px 12px; background:#2a1e0a; color:#ffa657; border-radius:5px; font-weight:700; font-size:7.5pt; border:1px solid #ffa657;">● Unsaved changes</span>
+      </div>
+      <div class="cfg-card">
+        <div class="cfg-header">
+          <span class="cfg-name">SETPOINT_TEMPERATURE</span>
+          <span class="cfg-type">float32</span>
+        </div>
+        <div class="cfg-fields">
+          <div class="cfg-field"><label>Offset</label><input value="10" readonly></div>
+          <div class="cfg-field"><label>Memory Area</label><input value="holding-register" readonly></div>
+          <div class="cfg-field"><label>Min Value</label><input value="0" readonly></div>
+          <div class="cfg-field"><label>Max Value</label><input value="200" readonly></div>
+        </div>
+      </div>
+      <div class="cfg-card modified">
+        <div class="cfg-header">
+          <span class="cfg-name">FLOW_RATE  <span style="color:#ffa657; font-size:7.5pt;">● modified</span></span>
+          <span class="cfg-type">uint16</span>
+        </div>
+        <div class="cfg-fields">
+          <div class="cfg-field"><label>Offset</label><input value="12" readonly></div>
+          <div class="cfg-field"><label>Memory Area</label><input value="holding-register" readonly></div>
+          <div class="cfg-field"><label>Scale</label><input value="0.1" readonly></div>
+          <div class="cfg-field"><label>Description</label><input value="L/min × 0.1" readonly></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Register fields</h3>
+  <table class="info">
+    <tr><th>Field</th><th>Required</th><th>Description</th></tr>
+    <tr><td><strong>Name</strong></td><td>Yes</td><td>Register identifier. Shown on the Monitor page and in exports.</td></tr>
+    <tr><td><strong>Offset</strong></td><td>Yes</td><td>Zero-based Modbus register address within the memory area (0 – 299).</td></tr>
+    <tr><td><strong>Memory Area</strong></td><td>Yes</td><td>One of: <code>input-register</code>, <code>holding-register</code>, <code>coil</code>, <code>discrete-input</code>.</td></tr>
+    <tr><td><strong>Type</strong></td><td>Yes</td><td>Data type — see the table below.</td></tr>
+    <tr><td><strong>Description</strong></td><td>No</td><td>Free-text label, visible as a tooltip on the Monitor page.</td></tr>
+    <tr><td><strong>Scale</strong></td><td>No</td><td>Multiply the physical value by this factor when writing to the register. Use for values like 4.20 stored as 420 with scale 0.01.</td></tr>
+    <tr><td><strong>Min / Max Value</strong></td><td>No</td><td>Alternative to Scale. Maps a physical range (e.g. 0–200 bar) to the raw integer range. Cannot be combined with Scale.</td></tr>
+    <tr><td><strong>Bit Offset / Bit Length</strong></td><td>No</td><td>For <code>word</code> type only. Extracts a specific set of bits from a 16-bit register.</td></tr>
+  </table>
+
+  <h3>Supported data types</h3>
+  <table class="info">
+    <tr><th>Type</th><th>Registers used</th><th>Range / Notes</th></tr>
+    <tr><td><code>uint16</code></td><td>1</td><td>0 to 65 535</td></tr>
+    <tr><td><code>int16</code></td><td>1</td><td>−32 768 to 32 767</td></tr>
+    <tr><td><code>uint32</code></td><td>2</td><td>0 to 4 294 967 295</td></tr>
+    <tr><td><code>int32</code></td><td>2</td><td>−2 147 483 648 to 2 147 483 647</td></tr>
+    <tr><td><code>uint64</code></td><td>4</td><td>0 to 18.4 × 10¹⁸</td></tr>
+    <tr><td><code>int64</code></td><td>4</td><td>±9.2 × 10¹⁸</td></tr>
+    <tr><td><code>float32</code></td><td>2</td><td>IEEE 754 single precision. Scale is not applied to floats.</td></tr>
+    <tr><td><code>float64</code></td><td>4</td><td>IEEE 754 double precision. Scale is not applied to floats.</td></tr>
+    <tr><td><code>boolean</code></td><td>1 bit</td><td>Stored as a single bit within a register word. Use <code>bit_offset</code> to place it.</td></tr>
+    <tr><td><code>word</code></td><td>1</td><td>Raw 16-bit register. Use <code>bit_offset</code> + <code>bit_length</code> to extract specific bit fields.</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="icon">⚠️</div>
+    <div class="body"><p><strong>Multi-register types span consecutive offsets automatically.</strong> A <code>float32</code> at offset 10 also occupies offset 11. Do not assign another register to offset 11 — the simulator will flag it as a validation error and ignore that register.</p></div>
+  </div>
+
+  <h3>Toolbar actions</h3>
+  <table class="info">
+    <tr><th>Button</th><th>Action</th></tr>
+    <tr><td><strong>Save to File</strong></td><td>Writes your changes to the server and applies them immediately. The button is only enabled when there are unsaved changes.</td></tr>
+    <tr><td><strong>Export JSON / CSV</strong></td><td>Downloads the current configuration as a file. Use JSON for full fidelity; use CSV for bulk editing in a spreadsheet.</td></tr>
+    <tr><td><strong>Import JSON / CSV</strong></td><td>Loads a configuration from a file. The imported config replaces the current one in the editor (not saved until you click <em>Save to File</em>).</td></tr>
+    <tr><td><strong>Reset to Default</strong></td><td>Restores the factory configuration. <strong>This is irreversible</strong> — export your config first if you want to keep it.</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════ BYTE ORDER ══ -->
+<div class="page page-break">
+  <div class="section-label">Reference</div>
+  <h2>Byte Order</h2>
+  <p class="lead">
+    Modbus is a 16-bit protocol. When a value is wider than 16 bits (e.g. a 32-bit float), it must be split across two or more registers.
+    Different manufacturers store these words in different orders. The simulator supports all common conventions.
+  </p>
+
+  <h3>Why it matters</h3>
+  <p>If your SCADA system reads a <code style="background:#1c2744;border:1px solid #2a3f6b;border-radius:3px;padding:1px 5px;font-family:monospace;color:#79c0ff;">float32</code> and gets a nonsense value like <strong>2.524 × 10³⁸</strong> instead of <strong>85.5</strong>, the word order is wrong. Toggle the byte order flags until the value is correct — no config change or restart needed.</p>
+
+  <h3>The four flags</h3>
+
+  <div class="byte-diagram">
+    <div style="font-family:'Segoe UI',system-ui,sans-serif; font-size:8pt; margin-bottom:4px; color:#8b949e;">
+      Example values used below:
+      &nbsp; float32 85.5 = <span style="color:#c9d1d9; font-family:monospace;">0x42AB0000</span>
+      &nbsp;|&nbsp; float64 85.5 = <span style="color:#c9d1d9; font-family:monospace;">0x4055600000000000</span>
+    </div>
+    <div style="font-family:'Segoe UI',system-ui,sans-serif; font-size:7pt; margin-bottom:14px; color:#6e7681;">
+      Color key: <span style="color:#79c0ff;">■</span> High word &nbsp; <span style="color:#bc8cff;">■</span> Low word
+    </div>
+
+    <!-- ── Big Endian ── -->
+    <div class="row" style="align-items:flex-start; margin-bottom:14px;">
+      <span class="lbl" style="margin-top:16px;">Big Endian:</span>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+
+          <!-- before -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#8b949e; text-align:center;">unchecked (little endian)</div>
+            <div style="display:flex; gap:4px;">
+              <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+                <div style="font-size:7pt; color:#c9d1d9;">Reg N — low word</div>
+                <div style="display:flex; gap:2px;">
+                  <div class="word hi" style="font-size:7pt; min-width:50px;">0x00<br><span style="color:#c9d1d9; font-size:7pt;">Byte 3</span></div>
+                  <div class="word hi" style="font-size:7pt; min-width:50px;">0x00<br><span style="color:#c9d1d9; font-size:7pt;">Byte 2</span></div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+                <div style="font-size:7pt; color:#c9d1d9;">Reg N+1 — high word</div>
+                <div style="display:flex; gap:2px;">
+                  <div class="word lo" style="font-size:7pt; min-width:50px;">0xAB<br><span style="color:#c9d1d9; font-size:7pt;">Byte 1</span></div>
+                  <div class="word lo" style="font-size:7pt; min-width:50px;">0x42<br><span style="color:#c9d1d9; font-size:7pt;">Byte 0</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:22px; font-size:13pt; color:#56d364; font-weight:700;">→</div>
+
+          <!-- after -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#56d364; text-align:center;">checked (default)</div>
+            <div style="display:flex; gap:4px;">
+              <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+                <div style="font-size:7pt; color:#c9d1d9;">Reg N — high word</div>
+                <div style="display:flex; gap:2px;">
+                  <div class="word hi" style="font-size:7pt; min-width:50px;">0x42<br><span style="color:#c9d1d9; font-size:7pt;">Byte 0</span></div>
+                  <div class="word hi" style="font-size:7pt; min-width:50px;">0xAB<br><span style="color:#c9d1d9; font-size:7pt;">Byte 1</span></div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+                <div style="font-size:7pt; color:#c9d1d9;">Reg N+1 — low word</div>
+                <div style="display:flex; gap:2px;">
+                  <div class="word lo" style="font-size:7pt; min-width:50px;">0x00<br><span style="color:#c9d1d9; font-size:7pt;">Byte 2</span></div>
+                  <div class="word lo" style="font-size:7pt; min-width:50px;">0x00<br><span style="color:#c9d1d9; font-size:7pt;">Byte 3</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:6.5pt; color:#56d364;">↑ most significant byte first, across the entire value</div>
+      </div>
+    </div>
+
+    <!-- ── First Word Low ── -->
+    <div class="row" style="align-items:flex-start; margin-bottom:14px;">
+      <span class="lbl" style="margin-top:16px;">First Word Low:</span>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="font-size:6.5pt; color:#8b949e; margin-bottom:2px;">float64 85.5 = 0x4055600000000000</div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+
+          <!-- before -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#8b949e; text-align:center;">unchecked</div>
+            <div style="display:flex; gap:4px;">
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N<br>0x4055<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N+1<br>0x6000<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+2<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+3<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; font-size:13pt; color:#56d364; font-weight:700;">→</div>
+
+          <!-- after -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#56d364; text-align:center;">checked</div>
+            <div style="display:flex; gap:4px;">
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N+1<br>0x6000<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N<br>0x4055<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+3<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+2<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:6.5pt; color:#56d364;">↑ words swapped within each pair — low word of each pair comes first</div>
+      </div>
+    </div>
+
+    <!-- ── First Double Word Low ── -->
+    <div class="row" style="align-items:flex-start; margin-bottom:14px;">
+      <span class="lbl" style="margin-top:16px;">First DWord Low <span style="color:#f0883e;">(64-bit only)</span>:</span>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="font-size:6.5pt; color:#8b949e; margin-bottom:2px;">float64 85.5 = 0x4055600000000000</div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+
+          <!-- before -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#8b949e; text-align:center;">unchecked</div>
+            <div style="display:flex; gap:4px;">
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N<br>0x4055<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N+1<br>0x6000<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+2<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+3<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; font-size:13pt; color:#56d364; font-weight:700;">→</div>
+
+          <!-- after -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#56d364; text-align:center;">checked</div>
+            <div style="display:flex; gap:4px;">
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+2<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+              <div class="word lo" style="font-size:7pt; min-width:50px;">Reg N+3<br>0x0000<br><span style="color:#c9d1d9;">Lo DWord</span></div>
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N<br>0x4055<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+              <div class="word hi" style="font-size:7pt; min-width:50px;">Reg N+1<br>0x6000<br><span style="color:#c9d1d9;">Hi DWord</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:6.5pt; color:#56d364;">↑ low 32-bit double-word comes first — the two 32-bit halves are swapped</div>
+      </div>
+    </div>
+
+    <!-- ── Modicon ── -->
+    <div class="row" style="align-items:flex-start; margin-bottom:4px;">
+      <span class="lbl" style="margin-top:16px;">Modicon:</span>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="display:flex; gap:10px; align-items:center;">
+
+          <!-- before -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#8b949e; text-align:center;">unchecked</div>
+            <div style="display:flex; gap:4px;">
+              <div class="word hi" style="font-size:7pt; padding:4px 8px; text-align:left;">
+                <div style="font-size:7pt; color:#c9d1d9; margin-bottom:2px;">Reg N</div>
+                <div style="font-family:monospace; letter-spacing:1px;">0100 0010 1010 1011</div>
+                <div style="font-size:6.5pt; color:#c9d1d9; margin-top:1px;">= 0x42AB</div>
+              </div>
+              <div class="word lo" style="font-size:7pt; padding:4px 8px; text-align:left;">
+                <div style="font-size:7pt; color:#c9d1d9; margin-bottom:2px;">Reg N+1</div>
+                <div style="font-family:monospace; letter-spacing:1px;">0000 0000 0000 0000</div>
+                <div style="font-size:6.5pt; color:#c9d1d9; margin-top:1px;">= 0x0000</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:13pt; color:#56d364; font-weight:700;">→</div>
+
+          <!-- after: registers swapped, bits within each reversed -->
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:6.5pt; color:#56d364; text-align:center;">checked</div>
+            <div style="display:flex; gap:4px;">
+              <div class="word lo" style="font-size:7pt; padding:4px 8px; text-align:left;">
+                <div style="font-size:7pt; color:#c9d1d9; margin-bottom:2px;">Reg N+1</div>
+                <div style="font-family:monospace; letter-spacing:1px;">0000 0000 0000 0000</div>
+                <div style="font-size:6.5pt; color:#c9d1d9; margin-top:1px;">= 0x0000</div>
+              </div>
+              <div class="word hi" style="font-size:7pt; padding:4px 8px; text-align:left;">
+                <div style="font-size:7pt; color:#c9d1d9; margin-bottom:2px;">Reg N</div>
+                <div style="font-family:monospace; letter-spacing:1px;">1101 0101 0100 0010</div>
+                <div style="font-size:6.5pt; color:#c9d1d9; margin-top:1px;">= 0xD542</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:6.5pt; color:#56d364;">↑ all bits of the value reversed — registers swap order, bits within each invert</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="info">
+    <tr><th>Flag</th><th>What it does</th></tr>
+    <tr><td><strong>Big Endian</strong></td><td>Controls <em>byte</em> ordering. Big Endian (default) stores the most significant byte first across the entire value — even for multi-register values such as a 32-bit float spanning two registers. Does not affect which register comes first; that is controlled by First Word Low.</td></tr>
+    <tr><td><strong>First Word Low</strong></td><td>For 32 and 64-bit values: the least significant 16-bit word is stored at the lower register address (words are swapped). Byte order within each word is unchanged. Common in Allen-Bradley and some Siemens devices.</td></tr>
+    <tr><td><strong>First Double Word Low</strong></td><td>For 64-bit values only (4 registers): the low 32-bit double-word is stored first (the two pairs of registers are swapped). Has no effect on 16 or 32-bit values.</td></tr>
+    <tr><td><strong>Modicon</strong></td><td>Reverses all 16 bits of each register independently — bit 0 becomes bit 15, bit 1 becomes bit 14, and so on within each 16-bit word. Can be combined with the other flags.</td></tr>
+  </table>
+
+  <div class="callout tip">
+    <div class="icon">✅</div>
+    <div class="body"><p><strong>Practical approach:</strong> Start with all flags unchecked (Big Endian default). Read a known value (e.g. a float32 set to exactly 1.0) from your Modbus client. If the value is wrong, toggle <em>First Word Low</em>. For 64-bit values that are still wrong, also try <em>First Double Word Low</em>. Use the <strong>Server Registers</strong> page to inspect the raw hex and verify.</p></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">Reference</div>
+  <h2>Scaling</h2>
+  <p class="lead">Scaling lets you store real-world engineering values as integers, which is common in Modbus devices that cannot natively send floating-point numbers.</p>
+
+  <h3>Scale factor</h3>
+  <p>The physical value is divided by the scale factor before being stored in the register. Your Modbus client reads the raw integer and must multiply by the scale to recover the real value.</p>
+
+  <table class="info">
+    <tr><th>Physical value</th><th>Scale</th><th>Raw register value</th></tr>
+    <tr><td>4.20 bar</td><td>0.01</td><td>420</td></tr>
+    <tr><td>23.7 °C</td><td>0.1</td><td>237</td></tr>
+    <tr><td>1 500 RPM</td><td>1</td><td>1500</td></tr>
+  </table>
+
+  <h3>Min / Max range mapping</h3>
+  <p>An alternative to Scale. You define a physical range and a raw register range, and the simulator performs the linear mapping automatically.</p>
+
+  <table class="info">
+    <tr><th>Example</th><th>Min Value</th><th>Max Value</th><th>Raw range</th></tr>
+    <tr><td>Pressure 0–16 bar</td><td>0</td><td>16</td><td>0 – 65535 (uint16)</td></tr>
+    <tr><td>Temperature −40 to +85 °C</td><td>−40</td><td>85</td><td>0 – 65535 (uint16)</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="icon">ℹ️</div>
+    <div class="body"><p><strong>Scaling does not apply to float types.</strong> If your register is <code>float32</code> or <code>float64</code>, the value is stored directly in IEEE 754 format — no scale or min/max is needed.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ QUICK REF ══ -->
+<div class="page page-break">
+  <div class="section-label">Quick Reference</div>
+  <h2>Common Tasks</h2>
+
+  <h3>Add a new register</h3>
+  <ol style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;">Go to <strong>Config Editor</strong></li>
+    <li style="margin-bottom:6px;">Find the panel for the memory area you need (e.g. Holding Register)</li>
+    <li style="margin-bottom:6px;">Click <strong>Add Register</strong> at the bottom of the panel</li>
+    <li style="margin-bottom:6px;">Fill in the Name, Offset, Type, and any scaling fields</li>
+    <li>Click <strong>Save to File</strong> — the register is live immediately</li>
+  </ol>
+
+  <h3>Check what your SCADA client actually reads</h3>
+  <ol style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;">Go to <strong>Server Registers</strong></li>
+    <li style="margin-bottom:6px;">Locate the register by name or Modbus address</li>
+    <li style="margin-bottom:6px;">Note the hex value in the Raw Value column</li>
+    <li>This is exactly what your Modbus client receives</li>
+  </ol>
+
+  <h3>Fix a wrong float value from my PLC</h3>
+  <ol style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;">Set a known value (e.g. a <code style="background:#1c2744;border:1px solid #2a3f6b;border-radius:3px;padding:1px 5px;font-family:monospace;color:#79c0ff;">float32</code> with a recognisable number)</li>
+    <li style="margin-bottom:6px;">Check raw words on the Server Registers page</li>
+    <li style="margin-bottom:6px;">Toggle <strong>First Word Low</strong> on the Monitor page</li>
+    <li style="margin-bottom:6px;">Re-read from your PLC/SCADA</li>
+    <li>If still wrong, try <strong>Modicon</strong> instead</li>
+  </ol>
+
+  <h3>Export and share my configuration</h3>
+  <ol style="padding-left:20px; margin-bottom:16px;">
+    <li style="margin-bottom:6px;">Go to <strong>Config Editor</strong></li>
+    <li style="margin-bottom:6px;">Click <strong>Export JSON</strong> to download the full configuration file</li>
+    <li>Send the file to a colleague — they can import it with <strong>Import JSON</strong></li>
+  </ol>
+
+  <hr class="divider">
+
+  <div class="section-label">Troubleshooting</div>
+  <h2>Troubleshooting</h2>
+
+  <table class="info">
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr>
+      <td>Monitor shows red dot / "Connection error"</td>
+      <td>Container has stopped</td>
+      <td>Check that the Docker container is running. Restart it if needed.</td>
+    </tr>
+    <tr>
+      <td>Modbus client cannot connect</td>
+      <td>Port 5020 not reachable</td>
+      <td>Verify the container exposes port 5020. Check firewall rules on the host machine.</td>
+    </tr>
+    <tr>
+      <td>Client reads wrong value for a float</td>
+      <td>Byte / word order mismatch</td>
+      <td>Toggle First Word Low or Modicon on the Monitor page.</td>
+    </tr>
+    <tr>
+      <td>Register missing from Monitor</td>
+      <td>Validation error in config</td>
+      <td>Go to Config Editor — invalid registers are highlighted. Check for duplicate offsets or wrong type for coil/DI.</td>
+    </tr>
+    <tr>
+      <td>Two registers seem to conflict</td>
+      <td>Multi-register type overlapping another register</td>
+      <td>A <code>float32</code> at offset N occupies offsets N and N+1. Move the conflicting register to a free offset.</td>
+    </tr>
+    <tr>
+      <td>Scale / min-max not working</td>
+      <td>Scaling applied to a float type</td>
+      <td>Scaling only applies to integer types. Use <code>float32</code> or <code>float64</code> for values that need decimal precision natively.</td>
+    </tr>
+  </table>
+
+  <hr class="divider">
+
+  <h2>Web UI — Page Summary</h2>
+  <table class="info">
+    <tr><th>Page</th><th>URL</th><th>Use it when…</th></tr>
+    <tr><td><strong>Monitor</strong></td><td><code>/</code></td><td>You want to see the current engineering values at a glance and control byte order.</td></tr>
+    <tr><td><strong>Server Registers</strong></td><td><code>/registers</code></td><td>You need to verify the exact raw hex values your Modbus client is reading.</td></tr>
+    <tr><td><strong>Config Editor</strong></td><td><code>/config-editor</code></td><td>You need to add, edit, delete, or import/export register definitions.</td></tr>
+  </table>
+</div>
+
+<div style="max-width:900px; margin:0 auto; padding:0 60px;">
+  <div id="footer-placeholder"></div>
+</div>
+<script>fetch('/footer.html').then(r=>r.text()).then(h=>{document.getElementById('footer-placeholder').outerHTML=h});</script>
+
+</body>
+</html>
