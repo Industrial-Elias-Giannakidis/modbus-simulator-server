@@ -261,10 +261,10 @@ async def poll_loop(server: ModbusServer):
     while True:
         # Server is truth — read and convert to real values
         snapshot = snapshot_all(server)
-        _server_values = snapshot
         if _live_mode:
             snapshot = randomize_snapshots(snapshot, live_mode=_live_mode)
             apply_snapshots(server, snapshots=snapshot)
+        _server_values = snapshot
         snapshot = byteOrderConverter.convert(snapshots=snapshot)
         snapshot = registerConverter.to_registers(snapshots=snapshot)
         snapshot = registerScalling.scale(snapshots=snapshot)
