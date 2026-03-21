@@ -296,14 +296,14 @@
     justify-content: center;
   }
   .footer-bio .bio-title {
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #c9d1d9;
     margin-bottom: 6px;
     letter-spacing: 0.01em;
   }
   .footer-bio .bio-text {
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     color: #8b949e;
     line-height: 1.6;
     max-width: 520px;
@@ -317,12 +317,21 @@
     justify-content: center;
   }
   .footer-bio .bio-tag {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     color: #58a6ff;
     background: #1c2744;
     border: 1px solid #2a3f6b;
     border-radius: 4px;
     padding: 2px 8px;
+    transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .footer-bio .bio-tag:hover {
+    color: #a5d3ff;
+    background: #243358;
+    border-color: #58a6ff;
+    box-shadow: 0 0 8px rgba(88,166,255,0.45);
+    transform: translateY(-2px) scale(1.07);
   }
   .footer-social {
     display: flex;
@@ -339,10 +348,22 @@
     text-decoration: none;
     color: #8b949e;
     font-size: 0.78rem;
-    transition: color 0.15s;
+    transition: color 0.2s, transform 0.2s;
   }
-  .footer-social a:hover { color: #58a6ff; }
-  .footer-social svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .footer-social a:hover {
+    color: #58a6ff;
+    transform: translateX(3px);
+  }
+  .footer-social svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    transition: filter 0.2s, transform 0.2s;
+  }
+  .footer-social a:hover svg {
+    filter: drop-shadow(0 0 5px rgba(88,166,255,0.7));
+    transform: scale(1.2);
+  }
   </style>
 </head>
 <body>
