@@ -161,6 +161,10 @@ async def handle_footer(_request: web.Request) -> web.FileResponse:
     return web.FileResponse(Path("static/footer.html"))
 
 
+async def handle_footer_css(_request: web.Request) -> web.FileResponse:
+    return web.FileResponse(Path("static/footer.css"))
+
+
 async def handle_server_config_get(_request: web.Request) -> web.Response:
     return web.Response(text=json.dumps(dataclasses.asdict(_byte_order_config)), content_type="application/json")
 
@@ -295,6 +299,7 @@ async def main():
         app.router.add_post("/live", handle_live_toggle)
         app.router.add_get("/logo.png", handle_logo)
         app.router.add_get("/footer.html", handle_footer)
+        app.router.add_get("/footer.css", handle_footer_css)
         runner = web.AppRunner(app)
         await runner.setup()
         site = web.TCPSite(runner, "0.0.0.0", API_PORT)
