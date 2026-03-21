@@ -1,6 +1,9 @@
 # Environment
 .env
 
+# Runtime config
+server_config.json
+
 # Python
 __pycache__/
 *.py[cod]
