@@ -2,7 +2,6 @@ import asyncio
 import dataclasses
 import json
 import logging
-import socket
 from pathlib import Path
 
 from aiohttp import web
@@ -300,8 +299,7 @@ async def main():
         await runner.setup()
         site = web.TCPSite(runner, "0.0.0.0", API_PORT)
         await site.start()
-        _host = socket.gethostbyname(socket.gethostname())
-        logger.info("Web API listening on http://%s:%d", _host, API_PORT)
+        logger.info("Web API listening on port %d", API_PORT)
 
         await server.start()
     except Exception as e:
